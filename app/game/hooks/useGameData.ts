@@ -1,8 +1,7 @@
 "use client";
 
+import { useSession } from "next-auth/react";
 import { useState, useCallback, useEffect, useRef } from "react";
-
-const API = "";
 
 export interface GameData {
   userId: string;
@@ -47,9 +46,11 @@ export interface Hero {
 }
 
 export function useGameData() {
+  const { data: session } = useSession();
   const [data, setData] = useState<GameData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const eventSourceRef = useRef<EventSource | null>(null);
 
   const fetchUser = useCallback(async () => {
     setLoading(true);
@@ -77,11 +78,11 @@ export function useGameData() {
     return json;
   }, [fetchUser]);
 
-  // SSE real-time updates
-  const eventSourceRef = useRef<EventSource | null>(null);
-
+  // SSE real-time updates - connect once with the user's session userId
   useEffect(() => {
     if (typeof window === "undefined") return;
+    if (!session?.user?.id) return;
+    if (eventSourceRef.current) return; // Already connected
 
     const es = new EventSource("/api/events");
     eventSourceRef.current = es;
@@ -93,21 +94,24 @@ export function useGameData() {
     es.addEventListener("user-update", (event) => {
       try {
         const update = JSON.parse(event.data);
-        setData(update);
+        // Only apply updates for this user
+        if (update.userId === session.user.id) {
+          setData(update);
+        }
       } catch {
         // Invalid JSON, skip update
       }
     });
 
     es.onerror = () => {
-      // EventSource will auto-reconnect, no manual intervention needed
+      // EventSource will auto-reconnect
     };
 
     return () => {
       es.close();
       eventSourceRef.current = null;
     };
-  }, []);
+  }, [session?.user?.id]);
 
   return { data, loading, error, fetchUser, api };
 }

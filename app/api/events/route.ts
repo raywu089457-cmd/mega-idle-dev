@@ -1,43 +1,23 @@
-import { NextRequest } from "next/server";
-import { getToken } from "next-auth/jwt";
-import { subscribeUser } from "@/lib/broadcast";
+import { subscribe } from "@/lib/broadcast";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(req: NextRequest): Promise<Response> {
-  const token = await getToken({
-    req,
-    secret: process.env.NEXTAUTH_SECRET,
-  });
-  const userId = token?.sub || null;
-
+export async function GET(): Promise<Response> {
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream({
     start(controller) {
-      // Send initial connected event with userId
-      const connectedEvent = `event: connected\ndata: ${JSON.stringify({ userId: userId || "anonymous" })}\n\n`;
+      // Send initial connected event
+      const connectedEvent = `event: connected\ndata: ${JSON.stringify({})}\n\n`;
       controller.enqueue(encoder.encode(connectedEvent));
 
-      if (!userId) {
-        // No auth - don't subscribe to user updates
-        return;
-      }
-
-      // Subscribe to user-specific events
-      const unsubscribe = subscribeUser(userId, "user-update", (data: string) => {
-        try {
-          const parsed = JSON.parse(data);
-          if (parsed.userId === userId) {
-            const message = `event: user-update\ndata: ${data}\n\n`;
-            controller.enqueue(encoder.encode(message));
-          }
-        } catch {
-          // Invalid JSON, skip
-        }
+      // Subscribe to all user-update events and forward to client
+      // Client filters by matching userId from the update with its own session
+      const unsubscribe = subscribe("user-update", (data: string) => {
+        const message = `event: user-update\ndata: ${data}\n\n`;
+        controller.enqueue(encoder.encode(message));
       });
 
-      // Cleanup on close
       const cleanup = () => {
         unsubscribe();
       };
