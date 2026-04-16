@@ -669,4 +669,4 @@ userSchema.statics.getOrCreate = async function(userId, username) {
   return user;
 };
 
-module.exports = mongoose.model("User", userSchema);
+module.exports = mongoose.models.User || mongoose.model("User", userSchema);

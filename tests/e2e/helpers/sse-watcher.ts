@@ -130,7 +130,7 @@ export async function captureAndVerifyGoldRefresh(
   goldAfter: string | null;
   updated: boolean;
 }> {
-  const goldBefore = await page.locator(goldSelector).textContent();
+  const goldBefore = await page.locator(goldSelector).first().textContent();
 
   // Wait up to `timeout` for the SSE update to refresh the display
   const start = Date.now();
@@ -140,7 +140,7 @@ export async function captureAndVerifyGoldRefresh(
   while (Date.now() - start < timeout) {
     await new Promise((r) => setTimeout(r, 1000));
 
-    goldAfter = await page.locator(goldSelector).textContent();
+    goldAfter = await page.locator(goldSelector).first().textContent();
 
     if (goldAfter !== null && goldAfter !== goldBefore) {
       updated = true;

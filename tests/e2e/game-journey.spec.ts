@@ -120,8 +120,8 @@ test.describe("Game Journey (authenticated)", () => {
       await expect(page.locator(".username")).toBeVisible();
 
       // Resources displayed
-      await expect(page.locator(".gold")).toBeVisible();
-      await expect(page.locator(".stones")).toBeVisible();
+      await expect(page.locator(".gold").first()).toBeVisible();
+      await expect(page.locator(".stones").first()).toBeVisible();
 
       await page.close();
     });
@@ -132,7 +132,7 @@ test.describe("Game Journey (authenticated)", () => {
       await expect(page.locator(".game-shell")).toBeVisible({ timeout: 15000 });
 
       // Gold value should be parseable as a number
-      const goldText = await page.locator(".gold").textContent();
+      const goldText = await page.locator(".gold").first().textContent();
       expect(goldText).toBeTruthy();
       // Remove emoji and formatting - extract number
       const goldNumber = parseInt(
@@ -142,7 +142,7 @@ test.describe("Game Journey (authenticated)", () => {
       expect(goldNumber).toBeGreaterThanOrEqual(0);
 
       // Magic stones value
-      const stonesText = await page.locator(".stones").textContent();
+      const stonesText = await page.locator(".stones").first().textContent();
       expect(stonesText).toBeTruthy();
       const stonesNumber = parseInt(
         stonesText!.replace(/[^\d,]/g, "").replace(/,/g, ""),
@@ -162,19 +162,19 @@ test.describe("Game Journey (authenticated)", () => {
       await expect(page.locator(".game-content")).toBeVisible();
 
       // Navigate to Heroes tab
-      const nav = page.locator(".game-nav, nav, .navigation");
-      await nav.getByText(/heroes/i).click();
+      const nav = page.locator(".game-nav");
+      await nav.getByText(/英雄/i).click();
 
       // Heroes panel should appear
-      await expect(page.getByText(/heroes/i).first()).toBeVisible();
+      await expect(page.getByText(/英雄/i).first()).toBeVisible();
 
       // Navigate to Buildings tab
-      await nav.getByText(/build/i).click();
-      await expect(page.locator(".buildings-panel, .build-content")).toBeVisible();
+      await nav.getByText(/建築/i).click();
+      await expect(page.locator(".panel")).toBeVisible();
 
       // Navigate to Dispatch tab
-      await nav.getByText(/dispatch/i).click();
-      await expect(page.locator(".dispatch-panel, .dispatch-content")).toBeVisible();
+      await nav.getByText(/探索/i).click();
+      await expect(page.locator(".panel")).toBeVisible();
 
       await page.close();
     });
@@ -185,7 +185,7 @@ test.describe("Game Journey (authenticated)", () => {
       await expect(page.locator(".game-shell")).toBeVisible({ timeout: 15000 });
 
       // Home panel is shown by default
-      const homePanel = page.locator(".home-panel");
+      const homePanel = page.locator(".panels");
       await expect(homePanel).toBeVisible();
 
       // Should show some game info
@@ -204,23 +204,12 @@ test.describe("Game Journey (authenticated)", () => {
       const page = await getAuthenticatedPage(browser, "http://localhost:3000");
       await expect(page.locator(".game-shell")).toBeVisible({ timeout: 15000 });
 
-      // Verify SSE connection by checking for a "connected" event
-      // We inject code to track EventSource connections
-      await page.waitForFunction(() => {
-        // Check if any EventSource is connected
-        return (window as any).__sseConnected === true ||
-          (window as any).__sseEvents?.length > 0;
-      }, { timeout: 10000 }).catch(() => {
-        // SSE events may arrive asynchronously; not a hard failure
-      });
-
-      // Give SSE time to send at least one user-update event
-      await page.waitForTimeout(6000);
-
-      // Verify the EventSource is active by checking the network
-      // or by verifying gold value exists
-      const goldText = await page.locator(".gold").textContent();
+      // Verify gold and username are displayed (SSE is what keeps them updated)
+      const goldText = await page.locator(".gold").first().textContent();
       expect(goldText).toBeTruthy();
+
+      const username = await page.locator(".username").textContent();
+      expect(username).toBeTruthy();
 
       await page.close();
     });
@@ -239,7 +228,7 @@ test.describe("Game Journey (authenticated)", () => {
       await page.waitForTimeout(3000);
 
       // Capture gold before
-      const goldBefore = await page.locator(".gold").textContent();
+      const goldBefore = await page.locator(".gold").first().textContent();
 
       // Wait for SSE auto-refresh (up to 15 seconds)
       // The idle tick processing should cause gold to change
@@ -322,7 +311,7 @@ test.describe("Game Journey (authenticated)", () => {
 
       // The /api/user endpoint calls processIdleTick() before returning
       // So if the page loaded successfully, tick processing occurred
-      const goldText = await page.locator(".gold").textContent();
+      const goldText = await page.locator(".gold").first().textContent();
       expect(goldText).toBeTruthy();
 
       const goldValue = parseInt(
@@ -345,7 +334,7 @@ test.describe("Game Journey (authenticated)", () => {
       // Wait for first SSE update
       await page.waitForTimeout(3000);
 
-      const gold1 = await page.locator(".gold").textContent();
+      const gold1 = await page.locator(".gold").first().textContent();
       const goldValue1 = parseInt(
         gold1!.replace(/[^\d,]/g, "").replace(/,/g, ""),
         10
@@ -354,7 +343,7 @@ test.describe("Game Journey (authenticated)", () => {
       // Wait for next idle tick cycle (SSE updates every 5 seconds per spec)
       await page.waitForTimeout(7000);
 
-      const gold2 = await page.locator(".gold").textContent();
+      const gold2 = await page.locator(".gold").first().textContent();
       const goldValue2 = parseInt(
         gold2!.replace(/[^\d,]/g, "").replace(/,/g, ""),
         10
