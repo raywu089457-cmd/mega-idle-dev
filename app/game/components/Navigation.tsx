@@ -1,6 +1,6 @@
 "use client";
 
-type Tab = "home" | "heroes" | "dispatch" | "team" | "build" | "worldboss" | "guild" | "rewards" | "logs" | "army" | "crafting" | "inventory" | "stats";
+type Tab = "home" | "heroes" | "dispatch" | "team" | "build" | "worldboss" | "guild" | "rewards" | "logs" | "army" | "crafting" | "inventory" | "stats" | "debug";
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: "home", label: "首頁", icon: "🏠" },
@@ -16,6 +16,7 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: "rewards", label: "獎勵", icon: "🎁" },
   { id: "stats", label: "統計", icon: "📊" },
   { id: "logs", label: "戰報", icon: "📜" },
+  { id: "debug", label: "除錯", icon: "🔧" },
 ];
 
 interface Props {

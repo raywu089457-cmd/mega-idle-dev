@@ -18,9 +18,10 @@ import CraftingPanel from "./components/CraftingPanel";
 import InventoryPanel from "./components/InventoryPanel";
 import StatisticsPanel from "./components/StatisticsPanel";
 import NotificationBell from "./components/NotificationBell";
+import DebugPanel from "./components/DebugPanel";
 import { useGameData } from "./hooks/useGameData";
 
-type Tab = "home" | "heroes" | "dispatch" | "team" | "build" | "worldboss" | "guild" | "rewards" | "logs" | "army" | "crafting" | "inventory" | "stats";
+type Tab = "home" | "heroes" | "dispatch" | "team" | "build" | "worldboss" | "guild" | "rewards" | "logs" | "army" | "crafting" | "inventory" | "stats" | "debug";
 
 export default function GamePage() {
   const { data: session, status } = useSession();
@@ -73,6 +74,7 @@ export default function GamePage() {
         {tab === "rewards" && <RewardsPanel data={data} api={api} />}
         {tab === "stats" && <StatisticsPanel data={data} />}
         {tab === "logs" && <LogsPanel logs={(data as any).battleLogs || []} />}
+        {tab === "debug" && <DebugPanel />}
       </main>
     </div>
   );
