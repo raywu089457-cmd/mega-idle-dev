@@ -14,3 +14,6 @@ services:
         sync: false
       - key: WORKER_SECRET
         generateValue: true
+      - key: NODE_PATH
+        value: ./worker/node_modules
+        sync: false
