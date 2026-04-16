@@ -1,0 +1,17 @@
+# render.yaml - Render Blueprint for Mega Idle Background Worker
+services:
+  - type: worker
+    name: mega-idle-worker
+    env: node
+    region: singapore
+    rootDir: worker
+    branch: master
+    buildCommand: cd worker && npm install
+    startCommand: cd worker && npm start
+    envVars:
+      - key: NEXTAUTH_URL
+        sync: false
+      - key: MONGODB_URI
+        sync: false
+      - key: WORKER_SECRET
+        generateValue: true
