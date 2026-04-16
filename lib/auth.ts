@@ -17,6 +17,9 @@ export const authOptions: AuthOptions = {
       clientSecret: process.env.DISCORD_CLIENT_SECRET!,
     }),
   ],
+  session: {
+    strategy: "jwt",
+  },
   callbacks: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     session({ session, token }: any) {
