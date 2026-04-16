@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
-import { getSession } from "next-auth/react";
+import type { NextRequest } from "next/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "./lib/auth";
 
-export async function middleware() {
-  const session = await getSession();
+export async function middleware(req: NextRequest) {
+  const session = await getServerSession(authOptions);
   if (!session) {
-    return NextResponse.redirect(new URL("/", process.env.NEXTAUTH_URL || "http://localhost:3000"));
+    const url = req.nextUrl.clone();
+    url.pathname = "/";
+    return NextResponse.redirect(url);
   }
   return NextResponse.next();
 }
