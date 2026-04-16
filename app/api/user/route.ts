@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth/next";
 import { connectDB } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
 import User from "@/models/User";
+import { broadcast } from "@/lib/broadcast";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -34,7 +35,7 @@ export async function GET() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   user = (await User.findOne({ userId: session.user.id })) as any;
 
-  return Response.json({
+  const snapshot = {
     userId: user.userId,
     username: user.username,
     gold: user.gold,
@@ -56,5 +57,10 @@ export async function GET() {
     worldBoss: user.worldBoss,
     cooldowns: user.cooldowns,
     lastActiveTime: user.statistics?.lastActiveTime,
-  });
+  };
+
+  // Broadcast update to SSE clients
+  broadcast("user-update", snapshot);
+
+  return Response.json(snapshot);
 }

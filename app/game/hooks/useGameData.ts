@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 
 const API = "";
 
@@ -76,6 +76,38 @@ export function useGameData() {
     await fetchUser();
     return json;
   }, [fetchUser]);
+
+  // SSE real-time updates
+  const eventSourceRef = useRef<EventSource | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const es = new EventSource("/api/events");
+    eventSourceRef.current = es;
+
+    es.addEventListener("connected", () => {
+      console.log("SSE connected");
+    });
+
+    es.addEventListener("user-update", (event) => {
+      try {
+        const update = JSON.parse(event.data);
+        setData(update);
+      } catch {
+        // Invalid JSON, skip update
+      }
+    });
+
+    es.onerror = () => {
+      // EventSource will auto-reconnect, no manual intervention needed
+    };
+
+    return () => {
+      es.close();
+      eventSourceRef.current = null;
+    };
+  }, []);
 
   return { data, loading, error, fetchUser, api };
 }
