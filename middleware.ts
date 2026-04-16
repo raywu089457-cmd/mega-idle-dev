@@ -16,5 +16,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/game"],
+  matcher: ["/game", "/api/events"],
 };
