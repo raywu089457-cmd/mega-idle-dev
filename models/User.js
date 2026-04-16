@@ -517,7 +517,10 @@ userSchema.methods.processIdleTick = function() {
   const elapsed = now - lastTick;
   const ticks = Math.floor(elapsed / tickInterval);
 
-  if (ticks <= 0) return this;
+  // Always produce at least 1 tick's worth per call (worker guarantees every 5s)
+  const ticksToApply = Math.max(1, ticks);
+
+  if (ticksToApply <= 0) return this;
 
   // 1. Monument Production - produces raw materials
   // Generous base production for casual players — satisfying idle gains
@@ -536,7 +539,7 @@ userSchema.methods.processIdleTick = function() {
     };
 
     materialsToProduce.forEach(mat => {
-      const produced = Math.floor(baseProduction * ticks * (bonuses[mat] || monumentBonus));
+      const produced = Math.floor(baseProduction * ticksToApply * (bonuses[mat] || monumentBonus));
       const current = this.materials.get(mat) || 0;
       const capacity = this.materialCapacity;
       this.materials.set(mat, Math.min(current + produced, capacity));
