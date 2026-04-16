@@ -1,9 +1,29 @@
 "use client";
 
-import { signIn } from "next-auth/react";
-import "./globals.css";
+import { useSession, signIn } from "next-auth/react";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.push("/game");
+    }
+  }, [status, router]);
+
+  if (status === "loading") {
+    return (
+      <div className="landing">
+        <div className="landing-content">
+          <p className="subtitle">載入中...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="landing">
       <div className="landing-content">
@@ -11,7 +31,7 @@ export default function Home() {
         <p className="subtitle">休閒放置 RPG · Discord 登入即玩</p>
 
         <button
-          onClick={() => signIn("discord")}
+          onClick={() => signIn("discord", { callbackUrl: "/game" })}
           className="discord-btn"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
