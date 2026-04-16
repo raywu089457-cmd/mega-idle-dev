@@ -22,6 +22,7 @@ const VALID_ACTIONS = [
   "resetHeroHunger",
   "addExp",
   "unlockZone",
+  "abandonKingdom",
 ];
 
 export async function POST(request: Request) {
@@ -136,6 +137,12 @@ export async function POST(request: Request) {
           user.unlockedZones.push(zone);
         }
         result = { unlockedZones: user.unlockedZones };
+        break;
+      }
+      case "abandonKingdom": {
+        const userId = user.userId;
+        await User.deleteOne({ userId });
+        result = { deleted: true, userId };
         break;
       }
       default:

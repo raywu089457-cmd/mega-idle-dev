@@ -81,6 +81,31 @@ export default function DebugPanel() {
     await callDebug("unlockZone", { zone });
   }
 
+  async function abandonKingdom() {
+    if (!window.confirm("⚠️ 確定要拋棄王國嗎？所有資料將被永久刪除，此操作無法復原！")) return;
+    if (!window.confirm("再次確認：刪除後你的帳號、英雄、建築、軍隊、資源將全部消失。是否繼續？")) return;
+    setLoading(true);
+    setMsg(null);
+    try {
+      const res = await api("/api/debug", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "abandonKingdom" }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setMsg("王國已刪除，正在跳轉...");
+        setTimeout(() => window.location.href = "/", 1500);
+      } else {
+        setMsg(`錯誤: ${json.error}`);
+      }
+    } catch (e) {
+      setMsg(`請求失敗: ${e instanceof Error ? e.message : "未知錯誤"}`);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const [debugExp, setDebugExp] = useState("");
   const [debugZone, setDebugZone] = useState("");
 
@@ -184,6 +209,16 @@ export default function DebugPanel() {
           />
           <button onClick={triggerTick} disabled={loading}>觸發 idle tick ({tickCount}x)</button>
           <button onClick={resetCooldowns} disabled={loading}>重置冷卻時間</button>
+        </div>
+      </section>
+
+      {/* 危險操作 */}
+      <section className="debug-section danger">
+        <h3>☠️ 危險操作</h3>
+        <div className="debug-row">
+          <button onClick={abandonKingdom} disabled={loading} className="btn-danger">
+            拋棄王國（刪除帳號）
+          </button>
         </div>
       </section>
 
