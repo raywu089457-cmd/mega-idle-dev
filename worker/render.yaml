@@ -5,8 +5,8 @@ services:
     env: node
     region: singapore
     branch: master
-    buildCommand: npm install
-    startCommand: npm start
+    buildCommand: npm install && cd worker && npm install
+    startCommand: node worker/index.js
     envVars:
       - key: NEXTAUTH_URL
         sync: false
