@@ -1,23 +1,31 @@
-import { subscribe, broadcast } from "@/lib/broadcast";
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
+import { subscribeUser } from "@/lib/broadcast";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(): Promise<Response> {
-  const userId = "anonymous"; // SSE does not have auth via getServerSession
+  const session = await getServerSession(authOptions);
+  const userId = session?.user?.id || null;
 
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream({
     start(controller) {
-      // Send initial connected event
-      const connectedEvent = `event: connected\ndata: ${JSON.stringify({ userId })}\n\n`;
+      // Send initial connected event with userId
+      const connectedEvent = `event: connected\ndata: ${JSON.stringify({ userId: userId || "anonymous" })}\n\n`;
       controller.enqueue(encoder.encode(connectedEvent));
 
-      // Subscribe to user-update events and forward to client
-      const unsubscribe = subscribe("user-update", (data: string) => {
+      if (!userId) {
+        // No auth - don't subscribe to user updates
+        return;
+      }
+
+      // Subscribe to user-specific events
+      const unsubscribe = subscribeUser(userId, "user-update", (data: string) => {
         try {
           const parsed = JSON.parse(data);
-          // Only send events for this specific user
           if (parsed.userId === userId) {
             const message = `event: user-update\ndata: ${data}\n\n`;
             controller.enqueue(encoder.encode(message));
@@ -32,9 +40,6 @@ export async function GET(): Promise<Response> {
         unsubscribe();
       };
 
-      // Store cleanup for potential AbortController trigger
-      // Client disconnect is handled by the browser automatically closing connection
-      // which causes the ReadableStream to abort
       return cleanup;
     },
     cancel() {
