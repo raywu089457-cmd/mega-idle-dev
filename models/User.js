@@ -448,7 +448,7 @@ userSchema.methods.getIdleHeroes = function() {
 };
 
 userSchema.methods.addHero = function(heroData) {
-  const heroesConst = require('../../game/_CONSTS/heroes');
+  const heroesConst = require('../lib/game/_CONSTS/heroes');
 
   const hero = {
     id: heroData.id || `hero_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
