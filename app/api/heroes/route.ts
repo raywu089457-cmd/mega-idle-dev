@@ -1,0 +1,75 @@
+import { getServerSession } from "next-auth/next";
+import { NextResponse } from "next/server";
+import { connectDB } from "@/lib/db";
+import { authOptions } from "@/lib/auth";
+import User from "@/models/User";
+import { HeroManagementService } from "@/lib/game/services/HeroManagementService";
+
+async function getUser() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) return null;
+  await connectDB();
+  return User.findOne({ userId: session.user.id }) as Promise<any>;
+}
+
+export async function GET() {
+  try {
+    const user = await getUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: "未登入" }, { status: 401 });
+    }
+
+    const territoryHeroes = user.heroes.roster.filter((h: any) => h.type === "territory");
+    const wanderingHeroes = user.heroes.roster.filter((h: any) => h.type === "wandering");
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        territoryHeroes,
+        wanderingHeroes,
+        territoryCap: user.territoryHeroCap,
+        wanderingCap: user.wanderingHeroCap,
+        usedTerritorySlots: user.heroes.usedTerritorySlots,
+        usedWanderingSlots: user.heroes.usedWanderingSlots,
+      },
+    });
+  } catch (error) {
+    console.error("GET /api/heroes error:", error);
+    return NextResponse.json({ success: false, error: "獲取英雄列表失敗" }, { status: 500 });
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const user = await getUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: "未登入" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { heroId } = body;
+
+    if (!heroId) {
+      return NextResponse.json({ success: false, error: "缺少 heroId" }, { status: 400 });
+    }
+
+    const result = HeroManagementService.recruitFromTavern(user, heroId);
+
+    if (!result.success) {
+      return NextResponse.json({ success: false, error: result.reason }, { status: 400 });
+    }
+
+    await user.save();
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        message: `成功招募 ${result.hero.name}`,
+        hero: result.hero,
+      },
+    });
+  } catch (error) {
+    console.error("POST /api/heroes error:", error);
+    return NextResponse.json({ success: false, error: "招募英雄失敗" }, { status: 500 });
+  }
+}
