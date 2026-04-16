@@ -3,74 +3,35 @@
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 import { useEffect, useState } from "react";
+import Navigation from "./components/Navigation";
+import HomePanel from "./components/HomePanel";
+import HeroesPanel from "./components/HeroesPanel";
+import DispatchPanel from "./components/DispatchPanel";
+import TeamPanel from "./components/TeamPanel";
+import BuildingsPanel from "./components/BuildingsPanel";
+import WorldBossPanel from "./components/WorldBossPanel";
+import GuildPanel from "./components/GuildPanel";
+import RewardsPanel from "./components/RewardsPanel";
+import LogsPanel from "./components/LogsPanel";
+import { useGameData } from "./hooks/useGameData";
 
-interface GameUser {
-  userId: string;
-  username: string;
-  gold: number;
-  goldCapacity: number;
-  magicStones: number;
-  materials: Record<string, number>;
-  materialCapacity: number;
-  buildings: Record<string, { level: number }>;
-  heroes: {
-    roster: Array<{
-      id: string;
-      name: string;
-      type: string;
-      level: number;
-      atk: number;
-      def: number;
-      maxHp: number;
-      currentHp: number;
-      isExploring: boolean;
-      hunger: number;
-      thirst: number;
-    }>;
-    territoryHeroCap: number;
-    wanderingHeroCap: number;
-  };
-  teams: Record<string, string[]>;
-  statistics: Record<string, number>;
-}
+type Tab = "home" | "heroes" | "dispatch" | "team" | "build" | "worldboss" | "guild" | "rewards" | "logs";
 
 export default function GamePage() {
   const { data: session, status } = useSession();
-  const [user, setUser] = useState<GameUser | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data, loading, error, fetchUser, api } = useGameData();
+  const [tab, setTab] = useState<Tab>("home");
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      redirect("/");
-    }
-    if (status === "authenticated") {
-      fetchUser();
-    }
-  }, [status]);
-
-  async function fetchUser() {
-    try {
-      const res = await fetch("/api/user");
-      if (!res.ok) throw new Error("Failed to load user");
-      const data = await res.json();
-      setUser(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
-    } finally {
-      setLoading(false);
-    }
-  }
+    if (status === "unauthenticated") redirect("/");
+    if (status === "authenticated") fetchUser();
+  }, [status, fetchUser]);
 
   if (status === "loading" || loading) {
-    return (
-      <div className="game-loading">
-        <p>載入中...</p>
-      </div>
-    );
+    return <div className="full-loading"><div className="spinner" /><p>載入中...</p></div>;
   }
 
-  if (error) {
+  if (error || !data) {
     return (
       <div className="game-error">
         <p>錯誤: {error}</p>
@@ -79,89 +40,29 @@ export default function GamePage() {
     );
   }
 
-  if (!user) return null;
-
-  const materialIcons: Record<string, string> = {
-    fruit: "🍎",
-    water: "💧",
-    wood: "🪵",
-    iron: "⛓️",
-    herbs: "🌿",
-    rations: "🍖",
-    drinking_water: "🥤",
-    potions: "🧪",
-  };
-
   return (
-    <div className="game-layout">
+    <div className="game-shell">
       <header className="game-header">
-        <h1>⚔️ {user.username}</h1>
-        <div className="header-resources">
-          <span className="gold">💰 {user.gold.toLocaleString()} / {user.goldCapacity.toLocaleString()}</span>
-          <span className="stones">💎 {user.magicStones}</span>
+        <h1>⚔️ Mega Idle</h1>
+        <div className="header-info">
+          <span className="gold">💰 {data.gold.toLocaleString()}</span>
+          <span className="stones">💎 {data.magicStones}</span>
+          <span className="username">{data.username}</span>
         </div>
       </header>
 
-      <main className="game-main">
-        <section className="panel">
-          <h2>🏠 領地</h2>
-          <div className="buildings">
-            {Object.entries(user.buildings).map(([key, b]) => (
-              <div key={key} className="building-item">
-                <span className="building-name">{key}</span>
-                <span className="building-level">Lv.{b.level}</span>
-              </div>
-            ))}
-          </div>
-        </section>
+      <Navigation active={tab} onChange={setTab} />
 
-        <section className="panel">
-          <h2>🎒 資源</h2>
-          <div className="materials">
-            {Object.entries(user.materials).map(([mat, val]) => (
-              <div key={mat} className="material-item">
-                <span className="material-icon">{materialIcons[mat] || "📦"}</span>
-                <span className="material-name">{mat}</span>
-                <span className="material-val">{Number(val).toLocaleString()}</span>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="panel">
-          <h2>🧙 英雄</h2>
-          <div className="hero-count">
-            領地英雄: {user.heroes.roster.filter((h) => h.type === "territory").length} / {user.heroes.territoryHeroCap}
-            <br />
-            流浪英雄: {user.heroes.roster.filter((h) => h.type === "wandering").length} / {user.heroes.wanderingHeroCap}
-          </div>
-          <div className="heroes-list">
-            {user.heroes.roster.slice(0, 10).map((hero) => (
-              <div key={hero.id} className={`hero-card ${hero.isExploring ? "exploring" : ""}`}>
-                <div className="hero-name">{" "}
-                  {hero.name}{" "}
-                  <span className="hero-level">Lv.{hero.level}</span>
-                </div>
-                <div className="hero-stats">
-                  ⚔️{hero.atk} 🛡️{hero.def} HP:{hero.currentHp}/{hero.maxHp}
-                </div>
-                <div className="hero-status">
-                  {hero.isExploring ? "🔍 探索中" : "🏠 待命"}{" "}
-                  🍖{hero.hunger} 💧{hero.thirst}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="panel">
-          <h2>📊 統計</h2>
-          <div className="stats">
-            <div>探索次數: {user.statistics.explorations}</div>
-            <div>勝利: {user.statistics.wins} / 敗北: {user.statistics.losses}</div>
-            <div>黃金總獲得: {user.statistics.goldEarned?.toLocaleString()}</div>
-          </div>
-        </section>
+      <main className="game-content">
+        {tab === "home" && <HomePanel data={data} />}
+        {tab === "heroes" && <HeroesPanel data={data} api={api} />}
+        {tab === "dispatch" && <DispatchPanel data={data} api={api} />}
+        {tab === "team" && <TeamPanel data={data} api={api} />}
+        {tab === "build" && <BuildingsPanel data={data} api={api} />}
+        {tab === "worldboss" && <WorldBossPanel data={data} api={api} worldBoss={data.worldBoss as any} />}
+        {tab === "guild" && <GuildPanel data={data} api={api} />}
+        {tab === "rewards" && <RewardsPanel data={data} api={api} />}
+        {tab === "logs" && <LogsPanel logs={(data as any).battleLogs || []} />}
       </main>
     </div>
   );
