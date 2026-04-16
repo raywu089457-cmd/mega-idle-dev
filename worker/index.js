@@ -68,14 +68,29 @@ async function processAllUsers() {
         await user.save();
       }
 
-      // 3. Broadcast update to connected clients
+      // 3. Broadcast update to connected clients (full snapshot matching /api/user response)
       const userData = {
+        userId: user.userId,
         username: user.username,
         gold: user.gold,
+        goldCapacity: user.goldCapacity,
+        magicStones: user.magicStones,
         materials: Object.fromEntries(user.materials),
-        heroes: user.heroes.roster,
+        materialCapacity: user.materialCapacity,
         buildings: user.buildings,
-        lastTick: user.lastTick,
+        heroes: {
+          roster: user.heroes?.roster || [],
+          territoryHeroCap: user.territoryHeroCap,
+          wanderingHeroCap: user.wanderingHeroCap,
+        },
+        teams: Object.fromEntries(user.teams),
+        battleLogs: user.battleHistory,
+        guild: user.guild,
+        statistics: user.statistics,
+        unlockedZones: user.unlockedZones,
+        worldBoss: user.worldBoss,
+        cooldowns: user.cooldowns,
+        lastActiveTime: user.statistics?.lastActiveTime,
       };
       await broadcast(user.userId, userData);
     } catch (err) {
