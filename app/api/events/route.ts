@@ -1,13 +1,15 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 import { subscribeUser } from "@/lib/broadcast";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(): Promise<Response> {
-  const session = await getServerSession(authOptions);
-  const userId = session?.user?.id || null;
+export async function GET(req: NextRequest): Promise<Response> {
+  const token = await getToken({
+    req,
+    secret: process.env.NEXTAUTH_SECRET,
+  });
+  const userId = token?.sub || null;
 
   const encoder = new TextEncoder();
 
