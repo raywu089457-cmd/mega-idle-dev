@@ -4,10 +4,9 @@ services:
     name: mega-idle-worker
     env: node
     region: singapore
-    rootDir: worker
     branch: master
-    buildCommand: cd worker && npm install
-    startCommand: cd worker && npm start
+    buildCommand: npm install
+    startCommand: npm start
     envVars:
       - key: NEXTAUTH_URL
         sync: false
