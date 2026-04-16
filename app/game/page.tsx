@@ -13,9 +13,14 @@ import WorldBossPanel from "./components/WorldBossPanel";
 import GuildPanel from "./components/GuildPanel";
 import RewardsPanel from "./components/RewardsPanel";
 import LogsPanel from "./components/LogsPanel";
+import ArmyPanel from "./components/ArmyPanel";
+import CraftingPanel from "./components/CraftingPanel";
+import InventoryPanel from "./components/InventoryPanel";
+import StatisticsPanel from "./components/StatisticsPanel";
+import NotificationBell from "./components/NotificationBell";
 import { useGameData } from "./hooks/useGameData";
 
-type Tab = "home" | "heroes" | "dispatch" | "team" | "build" | "worldboss" | "guild" | "rewards" | "logs";
+type Tab = "home" | "heroes" | "dispatch" | "team" | "build" | "worldboss" | "guild" | "rewards" | "logs" | "army" | "crafting" | "inventory" | "stats";
 
 export default function GamePage() {
   const { data: session, status } = useSession();
@@ -45,6 +50,7 @@ export default function GamePage() {
       <header className="game-header">
         <h1>⚔️ Mega Idle</h1>
         <div className="header-info">
+          <NotificationBell />
           <span className="gold">💰 {data.gold.toLocaleString()}</span>
           <span className="stones">💎 {data.magicStones}</span>
           <span className="username">{data.username}</span>
@@ -59,9 +65,13 @@ export default function GamePage() {
         {tab === "dispatch" && <DispatchPanel data={data} api={api} />}
         {tab === "team" && <TeamPanel data={data} api={api} />}
         {tab === "build" && <BuildingsPanel data={data} api={api} />}
+        {tab === "army" && <ArmyPanel data={data} api={api} />}
         {tab === "worldboss" && <WorldBossPanel data={data} api={api} worldBoss={data.worldBoss as any} />}
+        {tab === "crafting" && <CraftingPanel data={data} api={api} />}
         {tab === "guild" && <GuildPanel data={data} api={api} />}
+        {tab === "inventory" && <InventoryPanel data={data} api={api} />}
         {tab === "rewards" && <RewardsPanel data={data} api={api} />}
+        {tab === "stats" && <StatisticsPanel data={data} />}
         {tab === "logs" && <LogsPanel logs={(data as any).battleLogs || []} />}
       </main>
     </div>

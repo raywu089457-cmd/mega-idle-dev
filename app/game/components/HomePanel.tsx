@@ -1,26 +1,20 @@
 "use client";
 
 import { GameData } from "../hooks/useGameData";
-import { Hero } from "../hooks/useGameData";
-
-const MAT_ICONS: Record<string, string> = {
-  fruit: "🍎", water: "💧", wood: "🪵", iron: "⛓️",
-  herbs: "🌿", rations: "🍖", drinking_water: "🥤", potions: "🧪",
-};
-
-const BLD_NAMES: Record<string, string> = {
-  castle: "城堡", tavern: "酒館", monument: "紀念碑", warehouse: "倉庫",
-  guildHall: "公會大廳", weaponShop: "武器店", armorShop: "盔甲店",
-  potionShop: "藥水店", lumberMill: "伐木場", mine: "礦場", herbGarden: "草藥園", barracks: "兵營",
-};
 
 interface Props {
   data: GameData;
 }
 
+const MAT_ICONS: Record<string, string> = {
+  fruit: "🍎", water: "💧", wood: "🪵", iron: "⛓️",
+  herbs: "🌿", magic_stone: "💎", rations: "🍖", drinking_water: "🥤", potions: "🧪",
+};
+
 export default function HomePanel({ data }: Props) {
-  const exploring = data.heroes.roster.filter((h: Hero) => h.isExploring);
-  const idle = data.heroes.roster.filter((h: Hero) => !h.isExploring);
+  const exploring = data.heroes.roster.filter((h) => h.isExploring);
+  const idle = data.heroes.roster.filter((h) => !h.isExploring);
+  const productionRates = data.productionRates || {};
 
   return (
     <div className="panels">
@@ -40,6 +34,19 @@ export default function HomePanel({ data }: Props) {
             </div>
           ))}
         </div>
+        {Object.keys(productionRates).length > 0 && (
+          <div className="production-rates">
+            <h4>每 tick 產量</h4>
+            <div className="rates-grid">
+              {Object.entries(productionRates).map(([resource, rate]) => (
+                <div key={resource} className="rate-item">
+                  <span className="rate-icon">{MAT_ICONS[resource] || "📦"}</span>
+                  <span className="rate-value">+{Number(rate).toFixed(1)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
 
       {/* Buildings */}
@@ -48,7 +55,7 @@ export default function HomePanel({ data }: Props) {
         <div className="buildings-grid">
           {Object.entries(data.buildings).map(([k, b]) => (
             <div key={k} className="bld-item">
-              <span className="bld-name">{BLD_NAMES[k] || k}</span>
+              <span className="bld-name">{getBldName(k)}</span>
               <span className="bld-lv">Lv.{b.level}</span>
             </div>
           ))}
@@ -59,15 +66,15 @@ export default function HomePanel({ data }: Props) {
       <section className="panel">
         <h2>🧙 英雄</h2>
         <p className="hero-stat">
-          領地: {data.heroes.roster.filter((h: Hero) => h.type === "territory").length} / {data.heroes.territoryHeroCap}
+          領地: {data.heroes.roster.filter((h) => h.type === "territory").length} / {data.heroes.territoryHeroCap}
           {" · "}
-          流浪: {data.heroes.roster.filter((h: Hero) => h.type === "wandering").length} / {data.heroes.wanderingHeroCap}
+          流浪: {data.heroes.roster.filter((h) => h.type === "wandering").length} / {data.heroes.wanderingHeroCap}
         </p>
         <p className="hero-stat">
           🔍 探索中: {exploring.length} · 🏠 待命: {idle.length}
         </p>
         <div className="heroes-mini">
-          {data.heroes.roster.slice(0, 8).map((h: Hero) => (
+          {data.heroes.roster.slice(0, 8).map((h) => (
             <div key={h.id} className={`hero-chip ${h.isExploring ? "exp" : ""}`}>
               {h.name} Lv.{h.level}
             </div>
@@ -88,4 +95,13 @@ export default function HomePanel({ data }: Props) {
       </section>
     </div>
   );
+}
+
+function getBldName(k: string): string {
+  const names: Record<string, string> = {
+    castle: "城堡", tavern: "酒館", monument: "紀念碑", warehouse: "倉庫",
+    guildHall: "公會大廳", weaponShop: "武器店", armorShop: "盔甲店",
+    potionShop: "藥水店", lumberMill: "伐木場", mine: "礦場", herbGarden: "草藥園", barracks: "兵營", archery: "弓箭塔",
+  };
+  return names[k] || k;
 }

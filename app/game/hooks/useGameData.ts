@@ -23,6 +23,13 @@ export interface GameData {
   unlockedZones: number[];
   worldBoss: Record<string, unknown>;
   guild: Record<string, unknown>;
+  army?: {
+    units: ArmyUnits;
+    armory: ArmorySlots;
+  };
+  inventory?: Inventory;
+  productionRates?: Record<string, number>;
+  notifications?: Notification[];
 }
 
 export interface Hero {
@@ -38,11 +45,43 @@ export interface Hero {
   hunger: number;
   thirst: number;
   rarity?: string;
+  profession?: string;
+  experience?: number;
   currentZone?: number;
   currentSubZone?: number;
   currentTeamIdx?: number;
   lastZone?: number;
   lastSubZone?: number;
+  explorationTicks?: number;
+  equipment?: Record<string, string | null>;
+}
+
+export interface ArmyUnits {
+  archery: Record<string, number>;
+  barracks: Record<string, number>;
+}
+
+export interface ArmorySlots {
+  weapon: Record<string, number>;
+  helmet: Record<string, number>;
+  armor: Record<string, number>;
+  accessory: Record<string, number>;
+}
+
+export interface Inventory {
+  weapons: Record<string, number>;
+  armor: Record<string, number>;
+  helmets: Record<string, number>;
+  accessories: Record<string, number>;
+  potions: Record<string, number>;
+}
+
+export interface Notification {
+  id: string;
+  type: "level_up" | "resource_full" | "hero_hungry" | "task_complete" | "boss_respawn";
+  message: string;
+  timestamp: number;
+  read: boolean;
 }
 
 export function useGameData() {

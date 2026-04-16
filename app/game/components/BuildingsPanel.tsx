@@ -8,25 +8,13 @@ interface Props {
   api: ReturnType<typeof useGameData>["api"];
 }
 
-const BLD_INFO: Record<string, { name: string; desc: string }> = {
-  castle: { name: "城堡", desc: "解鎖更多領地英雄欄位" },
-  tavern: { name: "酒館", desc: "消耗水果和水製作口糧" },
-  monument: { name: "紀念碑", desc: "自動生產資源" },
-  warehouse: { name: "倉庫", desc: "增加資源容量上限" },
-  guildHall: { name: "公會大廳", desc: "解鎖公會系統" },
-  weaponShop: { name: "武器店", desc: "流浪英雄金幣來源" },
-  armorShop: { name: "盔甲店", desc: "流浪英雄金幣來源" },
-  potionShop: { name: "藥水店", desc: "消耗草藥製作藥水" },
-  lumberMill: { name: "伐木場", desc: "增加木材產量" },
-  mine: { name: "礦場", desc: "增加礦石產量" },
-  herbGarden: { name: "草藥園", desc: "增加草藥產量" },
-  barracks: { name: "兵營", desc: "訓練軍隊" },
-};
+const ZONE_NAMES = ["", "翠綠草原", "陰濕沼澤", "荊棘森林", "古老礦山", "寒霜冰原", "烈焰荒原", "金色沙漠", "幽靈船塢", "黑暗洞窟", "混沌深淵"];
 
 export default function BuildingsPanel({ data, api }: Props) {
   const [selected, setSelected] = useState<string | null>(null);
   const [upgrading, setUpgrading] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [showBuildNew, setShowBuildNew] = useState(false);
 
   function getCost(bld: string, level: number) {
     const l = level + 1;
@@ -58,9 +46,28 @@ export default function BuildingsPanel({ data, api }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ building: bld, action: "upgrade" }),
       });
-      setMsg(`${BLD_INFO[bld]?.name || bld} 升級成功`);
+      setMsg(`升級成功`);
     } catch (e) {
       setMsg(e instanceof Error ? e.message : "升級失敗");
+    } finally {
+      setUpgrading(false);
+    }
+  }
+
+  async function build(bld: string) {
+    const cost = getCost(bld, 0);
+    if (data.gold < cost.gold) { setMsg("黃金不足"); return; }
+    setUpgrading(true);
+    setMsg(null);
+    try {
+      await api("/api/build", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ building: bld, action: "build" }),
+      });
+      setMsg(`建造成功`);
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : "建造失敗");
     } finally {
       setUpgrading(false);
     }
@@ -69,6 +76,7 @@ export default function BuildingsPanel({ data, api }: Props) {
   return (
     <div className="panel">
       <h2>🏗️ 建築</h2>
+
       <div className="buildings-list">
         {Object.entries(data.buildings).map(([k, b]) => {
           const cost = getCost(k, b.level);
@@ -76,8 +84,8 @@ export default function BuildingsPanel({ data, api }: Props) {
           return (
             <div key={k} className="bld-row">
               <div className="bld-info">
-                <span className="bld-name">{BLD_INFO[k]?.name || k}</span>
-                <span className="bld-desc">{BLD_INFO[k]?.desc}</span>
+                <span className="bld-name">{getBuildingName(k)}</span>
+                <span className="bld-desc">{getBuildingDesc(k)}</span>
               </div>
               <div className="bld-right">
                 <span className="bld-lv">Lv.{b.level}</span>
@@ -93,7 +101,94 @@ export default function BuildingsPanel({ data, api }: Props) {
           );
         })}
       </div>
+
+      <button className="btn-secondary" onClick={() => setShowBuildNew(!showBuildNew)}>
+        {showBuildNew ? "隱藏建造" : "建造新建築"}
+      </button>
+
+      {showBuildNew && (
+        <div className="build-new-section">
+          {Object.entries(getAllBuildingInfo()).map(([k, info]) => {
+            const currentLevel = data.buildings[k]?.level || 0;
+            if (currentLevel > 0) return null;
+            const cost = getCost(k, 1);
+            const canAfford = data.gold >= cost.gold &&
+              (!cost.wood || data.materials.wood >= cost.wood) &&
+              (!cost.iron || data.materials.iron >= cost.iron) &&
+              (!cost.herbs || data.materials.herbs >= cost.herbs);
+            return (
+              <div key={k} className="bld-row buildable">
+                <div className="bld-info">
+                  <span className="bld-name">{info.name}</span>
+                  <span className="bld-desc">{info.desc}</span>
+                </div>
+                <div className="bld-cost">
+                  <span className={data.gold >= cost.gold ? "" : "insufficient"}>💰{cost.gold}</span>
+                  {cost.wood && <span className={data.materials.wood >= cost.wood ? "" : "insufficient"}>🪵{cost.wood}</span>}
+                  {cost.iron && <span className={data.materials.iron >= cost.iron ? "" : "insufficient"}>⛓️{cost.iron}</span>}
+                  {cost.herbs && <span className={data.materials.herbs >= cost.herbs ? "" : "insufficient"}>🌿{cost.herbs}</span>}
+                </div>
+                <button
+                  className="btn-sm btn-build"
+                  onClick={() => build(k)}
+                  disabled={upgrading || !canAfford}
+                >
+                  建造
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {msg && <p className="msg">{msg}</p>}
     </div>
   );
+}
+
+function getBuildingName(k: string): string {
+  const names: Record<string, string> = {
+    castle: "城堡", tavern: "酒館", monument: "紀念碑", warehouse: "倉庫",
+    guildHall: "公會大廳", weaponShop: "武器店", armorShop: "盔甲店",
+    potionShop: "藥水店", lumberMill: "伐木場", mine: "礦場", herbGarden: "草藥園", barracks: "兵營",
+    archery: "弓箭塔",
+  };
+  return names[k] || k;
+}
+
+function getBuildingDesc(k: string): string {
+  const descs: Record<string, string> = {
+    castle: "解鎖更多領地英雄欄位",
+    tavern: "消耗水果和水製作口糧",
+    monument: "自動生產資源",
+    warehouse: "增加資源容量上限",
+    guildHall: "解鎖公會系統",
+    weaponShop: "流浪英雄金幣來源",
+    armorShop: "流浪英雄金幣來源",
+    potionShop: "消耗草藥製作藥水",
+    lumberMill: "增加木材產量",
+    mine: "增加礦石產量",
+    herbGarden: "增加草藥產量",
+    barracks: "訓練軍隊",
+    archery: "訓練弓箭部隊",
+  };
+  return descs[k] || "";
+}
+
+function getAllBuildingInfo() {
+  return {
+    castle: { name: "城堡", desc: "解鎖更多領地英雄欄位" },
+    tavern: { name: "酒館", desc: "消耗水果和水製作口糧" },
+    monument: { name: "紀念碑", desc: "自動生產資源" },
+    warehouse: { name: "倉庫", desc: "增加資源容量上限" },
+    guildHall: { name: "公會大廳", desc: "解鎖公會系統" },
+    weaponShop: { name: "武器店", desc: "流浪英雄金幣來源" },
+    armorShop: { name: "盔甲店", desc: "流浪英雄金幣來源" },
+    potionShop: { name: "藥水店", desc: "消耗草藥製作藥水" },
+    lumberMill: { name: "伐木場", desc: "增加木材產量" },
+    mine: { name: "礦場", desc: "增加礦石產量" },
+    herbGarden: { name: "草藥園", desc: "增加草藥產量" },
+    barracks: { name: "兵營", desc: "訓練軍隊" },
+    archery: { name: "弓箭塔", desc: "訓練弓箭部隊" },
+  };
 }
