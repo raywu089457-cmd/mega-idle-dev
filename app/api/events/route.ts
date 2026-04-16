@@ -12,14 +12,23 @@ export async function GET(): Promise<Response> {
       controller.enqueue(encoder.encode(connectedEvent));
 
       // Subscribe to all user-update events and forward to client
-      // Client filters by matching userId from the update with its own session
       const unsubscribe = subscribe("user-update", (data: string) => {
-        const message = `event: user-update\ndata: ${data}\n\n`;
-        controller.enqueue(encoder.encode(message));
+        try {
+          const message = `event: user-update\ndata: ${data}\n\n`;
+          controller.enqueue(encoder.encode(message));
+        } catch {
+          // Controller may be closed (client disconnected) - unsubscribe to avoid errors
+          unsubscribe();
+        }
       });
 
+      // Cleanup when stream is cancelled
       const cleanup = () => {
-        unsubscribe();
+        try {
+          unsubscribe();
+        } catch {
+          // Already unsubscribed
+        }
       };
 
       return cleanup;
