@@ -1,0 +1,263 @@
+:root {
+  --background: #0a0a0f;
+  --foreground: #e0e0e0;
+  --panel-bg: #12121a;
+  --panel-border: #2a2a3a;
+  --accent: #5865F2;
+  --accent-hover: #4752c4;
+  --gold: #ffd700;
+  --hp: #4ade80;
+  --danger: #ef4444;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html, body {
+  height: 100%;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--background);
+  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== LANDING PAGE ===== */
+.landing {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at center, #1a1a2e 0%, #0a0a0f 100%);
+}
+
+.landing-content {
+  text-align: center;
+  padding: 2rem;
+}
+
+.title {
+  font-size: 3.5rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, #ffd700, #ff8c00);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.subtitle {
+  font-size: 1.2rem;
+  color: #888;
+  margin-bottom: 3rem;
+}
+
+.discord-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 2.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: white;
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.discord-btn:hover {
+  background: var(--accent-hover);
+}
+
+.note {
+  margin-top: 1.5rem;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+/* ===== GAME LAYOUT ===== */
+.game-loading, .game-error {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.game-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.game-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+  background: var(--panel-bg);
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.game-header h1 {
+  font-size: 1.5rem;
+}
+
+.header-resources {
+  display: flex;
+  gap: 1.5rem;
+  font-size: 1rem;
+}
+
+.gold { color: var(--gold); }
+.stones { color: #a78bfa; }
+
+.game-main {
+  flex: 1;
+  padding: 1.5rem 2rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.panel {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+
+.panel h2 {
+  font-size: 1rem;
+  color: #aaa;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Buildings */
+.buildings {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 0.5rem;
+}
+
+.building-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.75rem;
+  background: #1a1a25;
+  border-radius: 8px;
+  border: 1px solid #2a2a3a;
+}
+
+.building-name {
+  font-size: 0.75rem;
+  color: #888;
+  text-transform: capitalize;
+}
+
+.building-level {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--hp);
+  margin-top: 0.25rem;
+}
+
+/* Materials */
+.materials {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 0.5rem;
+}
+
+.material-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: #1a1a25;
+  border-radius: 6px;
+}
+
+.material-icon { font-size: 1.1rem; }
+.material-name {
+  font-size: 0.75rem;
+  color: #888;
+  flex: 1;
+}
+.material-val {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* Heroes */
+.hero-count {
+  font-size: 0.85rem;
+  color: #888;
+  margin-bottom: 1rem;
+}
+
+.heroes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.hero-card {
+  padding: 0.75rem;
+  background: #1a1a25;
+  border-radius: 8px;
+  border: 1px solid #2a2a3a;
+}
+
+.hero-card.exploring {
+  border-color: #5865F2;
+}
+
+.hero-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.hero-level {
+  font-size: 0.75rem;
+  color: #888;
+  font-weight: normal;
+}
+
+.hero-stats {
+  font-size: 0.8rem;
+  color: #aaa;
+  margin-top: 0.25rem;
+}
+
+.hero-status {
+  font-size: 0.75rem;
+  color: #666;
+  margin-top: 0.25rem;
+}
+
+/* Stats */
+.stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #aaa;
+}
+
+.game-error button {
+  padding: 0.5rem 1.5rem;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
