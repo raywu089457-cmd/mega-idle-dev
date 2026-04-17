@@ -212,6 +212,11 @@ async function processExploration(user) {
         // Process level up
         HeroManagementService.addXp(user, hero.id, 0);
       }
+
+      // Clear exploring state so hero can be dispatched again
+      hero.isExploring = false;
+      hero.currentZone = null;
+      hero.currentSubZone = null;
     }
 
     // Give rewards
