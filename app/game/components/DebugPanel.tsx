@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { signOut, getCsrfToken } from "next-auth/react";
 import { useGameData } from "../hooks/useGameData";
 
 export default function DebugPanel() {
@@ -87,19 +88,34 @@ export default function DebugPanel() {
     setLoading(true);
     setMsg(null);
     try {
-      const res = await api("/api/debug", {
+      // Step 1: Delete MongoDB user document
+      const res = await fetch("/api/debug", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "deleteAccount" }),
       });
       const json = await res.json();
-      if (json.success) {
-        setMsg("帳號已刪除，正在重新登入...");
-        // Redirect to home after signOut completes
-        setTimeout(() => window.location.href = "/", 1500);
-      } else {
+      if (!json.success) {
         setMsg(`錯誤: ${json.error}`);
+        return;
       }
+
+      setMsg("帳號已刪除，正在登出...");
+
+      // Step 2: Call NextAuth signout endpoint directly (not the react helper)
+      // This ensures the HTTP-only session cookie is actually cleared
+      await fetch("/api/auth/signout", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ csrfToken: await getCsrfToken() }),
+      });
+
+      // Step 3: Clear all NextAuth cookies manually for good measure
+      document.cookie = "next-auth.session-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      document.cookie = "__Secure-next-auth.session-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+
+      // Step 4: Redirect to home - user must click Discord login again
+      window.location.href = "/";
     } catch (e) {
       setMsg(`請求失敗: ${e instanceof Error ? e.message : "未知錯誤"}`);
     } finally {
