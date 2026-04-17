@@ -98,10 +98,17 @@ async function processExploration(user) {
   // Apply results to each hero
   for (const hero of exploringHeroes) {
     if (result.victory) {
-      // Victory rewards
-      hero.experience += Math.floor(result.xpGained / exploringHeroes.length);
+      // Victory rewards - XP is accumulated
+      const xpGained = Math.floor(result.xpGained / exploringHeroes.length);
+      hero.experience += xpGained;
       hero.lastZone = hero.currentZone;
       hero.lastSubZone = hero.currentSubZone;
+
+      // Process level ups (handles XP threshold check + stat increases)
+      const levelResult = HeroManagementService.addXp(user, hero.id, 0);
+      if (levelResult?.leveledUp) {
+        console.log(`[worker] Hero ${hero.name} leveled up to ${hero.level}!`);
+      }
     } else {
       // Defeat - lose some hunger/thirst, reduced HP (revived at half HP by CombatResolver)
       hero.hunger = Math.max(0, hero.hunger - 10);
