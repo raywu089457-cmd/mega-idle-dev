@@ -42,7 +42,7 @@ export const authOptions: AuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
         await connectDB();
-        const user = await User.findByEmail(credentials.email);
+        const user = await (User as any).findByEmail(credentials.email);
         if (!user || !user.passwordHash) return null;
         const valid = await user.verifyPassword(credentials.password);
         if (!valid) return null;

@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import User from "@/models/User";
 
+interface RegisterDto {
+  email: string;
+  password: string;
+  username?: string;
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -23,7 +29,7 @@ export async function POST(request: Request) {
 
     await connectDB();
 
-    const user = await User.register({ email, password, username });
+    const user = await (User as any).register({ email, password, username } as RegisterDto);
     return NextResponse.json({
       success: true,
       data: {
