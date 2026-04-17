@@ -1,3 +1,49 @@
+const axios = require("axios");
+const mongoose = require("mongoose");
+const User = require("../models/User");
+const { HeroManagementService } = require("../lib/game/services/HeroManagementService");
+const { subZones } = require("../lib/game/_UNIVERSE/sub-zones");
+
+const MONGODB_URI = process.env.MONGODB_URI;
+const WANDERING_SPAWN_CHANCE = 0.3;
+
+async function connectDB() {
+  if (!MONGODB_URI) {
+    throw new Error("MONGODB_URI environment variable is not set");
+  }
+
+  if (mongoose.connection.readyState === 0) {
+    await mongoose.connect(MONGODB_URI, { bufferCommands: false });
+  }
+  return mongoose.connection;
+}
+
+async function broadcast(userId, userData) {
+  const NEXTAUTH_URL = process.env.NEXTAUTH_URL;
+  const WORKER_SECRET = process.env.WORKER_SECRET;
+
+  if (!NEXTAUTH_URL || !WORKER_SECRET) {
+    console.error("[broadcast] Missing NEXTAUTH_URL or WORKER_SECRET");
+    return;
+  }
+
+  try {
+    await axios.post(
+      `${NEXTAUTH_URL}/api/internal/broadcast`,
+      { userId, ...userData },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "X-Worker-Secret": WORKER_SECRET,
+        },
+        timeout: 10000,
+      }
+    );
+  } catch (err) {
+    console.error(`[broadcast] Failed for user ${userId}:`, err.message);
+  }
+}
+
 /**
  * Process exploration battles for a user's dispatched heroes
  * TURN-BASED: Execute ONE round per tick, tracking combat state
