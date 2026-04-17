@@ -241,14 +241,14 @@ async function processAllUsers() {
   console.log(`[tick] ${new Date().toISOString()} Processing ${users.length} user(s)`);
 
   for (const user of users) {
+    console.log(`[tick] Processing user ${user.userId} (${user.username})`);
     try {
       // 1. Run idle tick (monument production, tavern, potion shop)
       await user.processIdleTick();
-      console.log(`[tick] Idle tick done for ${user.userId}, gold=${user.gold}`);
+      console.log(`[tick] Idle tick done for ${user.userId}, gold=${user.gold}, monumentLevel=${user.buildings?.monument?.level}`);
 
       // 2. Process exploration battles
       await processExploration(user);
-      console.log(`[tick] Exploration done for ${user.userId}`);
 
       // 3. Wandering hero spawning (30% chance per user per tick if under cap)
       const canSpawnWandering =
@@ -291,15 +291,23 @@ async function processAllUsers() {
 
 async function main() {
   console.log("[worker] Starting Mega Idle background worker");
+  console.log(`[worker] MONGODB_URI set: ${!!MONGODB_URI}`);
 
   try {
     await connectDB();
     console.log("[worker] Connected to MongoDB");
 
     // Main worker loop - runs every 5 seconds
+    let tickCount = 0;
     setInterval(async () => {
-      console.log("[tick] Running worker tick");
-      await processAllUsers();
+      tickCount++;
+      console.log(`[tick] ${new Date().toISOString()} Tick #${tickCount} START`);
+      try {
+        await processAllUsers();
+      } catch (err) {
+        console.error(`[tick] FATAL ERROR in tick #${tickCount}:`, err);
+      }
+      console.log(`[tick] ${new Date().toISOString()} Tick #${tickCount} END`);
     }, 5000);
 
     console.log("[worker] Worker tick started - processing every 5 seconds");
