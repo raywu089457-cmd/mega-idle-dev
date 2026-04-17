@@ -22,7 +22,7 @@ export default function WorldBossPanel({ data, api, worldBoss }: Props) {
   const [msg, setMsg] = useState<string | null>(null);
   const [countdown, setCountdown] = useState<string | null>(null);
 
-  const idleHeroes = data.heroes.roster.filter((h: Hero) => !h.isExploring);
+  const idleHeroes = data.heroes.roster.filter((h: Hero) => !h.isExploring && h.type === "territory");
   const bossAlive = worldBoss?.isAlive !== false;
   const bossHp = worldBoss?.currentHp ?? 3000000;
   const bossMaxHp = worldBoss?.maxHp ?? 3000000;

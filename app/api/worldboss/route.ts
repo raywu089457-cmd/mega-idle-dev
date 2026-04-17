@@ -78,6 +78,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: "沒有有效的英雄" }, { status: 400 });
     }
 
+    // Validate hero types - only territory heroes can attack world boss
+    const invalidHeroes = heroes.filter((h: any) => h.type !== "territory");
+    if (invalidHeroes.length > 0) {
+      return NextResponse.json(
+        { success: false, error: `流浪英雄不能攻擊世界王: ${invalidHeroes.map((h: any) => h.name).join(", ")}` },
+        { status: 400 }
+      );
+    }
+
     // Use zone 1, subZone 3 (boss zone) for world boss combat
     // Create a mock subZone for the boss
     const bossSubZone = {

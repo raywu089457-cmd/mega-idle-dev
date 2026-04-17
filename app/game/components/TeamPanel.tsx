@@ -14,7 +14,7 @@ export default function TeamPanel({ data, api }: Props) {
   const [msg, setMsg] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  const idleHeroes = data.heroes.roster.filter((h: Hero) => !h.isExploring);
+  const idleHeroes = data.heroes.roster.filter((h: Hero) => !h.isExploring && h.type === "territory");
 
   async function assign() {
     if (!selectedHero || targetTeam === null) { setMsg("請選擇英雄和隊伍"); return; }

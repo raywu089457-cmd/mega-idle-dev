@@ -18,7 +18,7 @@ export default function DispatchPanel({ data, api }: Props) {
   const [sending, setSending] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
-  const idleHeroes = data.heroes.roster.filter((h: Hero) => !h.isExploring);
+  const idleHeroes = data.heroes.roster.filter((h: Hero) => !h.isExploring && h.type === "territory");
 
   function toggleHero(id: string) {
     setSelected((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);

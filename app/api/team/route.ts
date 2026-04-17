@@ -63,6 +63,9 @@ export async function POST(request: Request) {
     if (!hero) {
       return NextResponse.json({ success: false, error: "英雄不存在" }, { status: 404 });
     }
+    if (hero.type !== "territory") {
+      return NextResponse.json({ success: false, error: "只能操作領地英雄" }, { status: 400 });
+    }
 
     let success: boolean;
     if (action === "add") {
