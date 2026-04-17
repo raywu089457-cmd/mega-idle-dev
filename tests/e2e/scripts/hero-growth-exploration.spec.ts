@@ -45,6 +45,17 @@ test("Hero Growth Through Exploration - Level heroes to 30 via combat only", asy
   console.log(`[START] Territory heroes: ${heroRows.length}`);
   console.log(`[START] Highest level: ${maxInitialLevel}`);
 
+  // Recall all heroes first to ensure clean state
+  console.log("\n[SETUP] Recalling all exploring heroes for clean state...");
+  await page.locator(".game-nav").getByText(/探索/).click();
+  await page.waitForTimeout(1000);
+  const initialRecallBtn = page.locator("button").filter({ hasText: /召回/i }).first();
+  if (await initialRecallBtn.count() > 0 && !(await initialRecallBtn.isDisabled().catch(() => true))) {
+    await initialRecallBtn.click();
+    await page.waitForTimeout(2000);
+    console.log("[SETUP] All heroes recalled");
+  }
+
   let currentMaxLevel = maxInitialLevel;
   const startTime = Date.now();
   let explorationCount = 0;
@@ -93,14 +104,21 @@ test("Hero Growth Through Exploration - Level heroes to 30 via combat only", asy
     const canDispatch = await dispatchBtn.count() > 0 && !(await dispatchBtn.isDisabled().catch(() => true));
 
     if (!canDispatch) {
-      console.log("[WARN] Cannot dispatch - checking recall");
+      console.log("[WARN] Cannot dispatch - attempting recall");
       const recallBtn = page.locator("button").filter({ hasText: /召回/i }).first();
       if (await recallBtn.count() > 0) {
         await recallBtn.click();
+        console.log("[WARN] Hero recalled");
         await page.waitForTimeout(2000);
       }
-      await page.waitForTimeout(5000);
-      continue;
+      // Try dispatch again
+      const retryDispatchBtn = page.locator("button").filter({ hasText: /派遣/i }).first();
+      if (await retryDispatchBtn.count() > 0 && !(await retryDispatchBtn.isDisabled().catch(() => true))) {
+        console.log("[WARN] Retrying dispatch after recall");
+      } else {
+        await page.waitForTimeout(5000);
+        continue;
+      }
     }
 
     // Dispatch hero
@@ -110,6 +128,14 @@ test("Hero Growth Through Exploration - Level heroes to 30 via combat only", asy
 
     // Wait for exploration to complete (30s cooldown + buffer)
     await page.waitForTimeout(ZONE_TIMEOUT);
+
+    // Recall hero after exploration (to end exploring state)
+    const recallBtn = page.locator("button").filter({ hasText: /召回/i }).first();
+    if (await recallBtn.count() > 0) {
+      await recallBtn.click();
+      console.log(`[${elapsed}m] Hero recalled`);
+      await page.waitForTimeout(2000);
+    }
 
     // Check stats
     await page.locator(".game-nav").getByText(/首頁/).click();
