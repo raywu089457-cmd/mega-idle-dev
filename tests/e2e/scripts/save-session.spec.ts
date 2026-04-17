@@ -28,7 +28,7 @@ test("save Discord session", async ({ browser }) => {
   const page = await context.newPage();
 
   console.log("1. Going to landing page...");
-  await page.goto("http://localhost:3000");
+  await page.goto("https://mega-idle-dev.onrender.com");
   await page.waitForLoadState("networkidle");
 
   console.log("2. Clicking Discord login...");

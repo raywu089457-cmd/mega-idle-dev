@@ -37,13 +37,13 @@ test("recruit heroes", async ({ browser }) => {
 
   const context = await browser.newContext({
     storageState: SESSION_PATH,
-    baseURL: "http://localhost:3000",
+    baseURL: "https://mega-idle-dev.onrender.com",
   });
   const page = await context.newPage();
 
   console.log("🎮 Testing recruit feature...\n");
 
-  await page.goto("http://localhost:3000/game");
+  await page.goto("https://mega-idle-dev.onrender.com/game");
   await page.waitForURL(/\/game/, { timeout: 15000 });
   await page.locator(".game-shell").waitFor({ timeout: 15000 });
 

@@ -84,6 +84,17 @@ async function getAuthenticatedPage(
     // No authorize step
   }
 
+  // Discord may show "App Launched" verification page - click Continue to Discord
+  try {
+    const continueBtn = page.getByRole("button", {
+      name: /continue to discord/i,
+    });
+    await continueBtn.waitFor({ timeout: 5000 });
+    await continueBtn.click();
+  } catch {
+    // No app launched step
+  }
+
   await page.waitForURL(/\/game$/, { timeout: 20000 });
   // Wait for .game-shell to appear (SSE keeps network active, so domcontentloaded never completes)
   await page.locator(".game-shell").waitFor({ timeout: 15000 });
@@ -108,7 +119,7 @@ test.describe("Game Journey (authenticated)", () => {
     });
 
     test("game page loads with user data after login", async ({ browser }) => {
-      const page = await getAuthenticatedPage(browser, "http://localhost:3000");
+      const page = await getAuthenticatedPage(browser, "https://mega-idle-dev.onrender.com");
 
       // Game shell must be visible
       await expect(page.locator(".game-shell")).toBeVisible({ timeout: 15000 });
@@ -127,7 +138,7 @@ test.describe("Game Journey (authenticated)", () => {
     });
 
     test("gold and magic stones values are numeric", async ({ browser }) => {
-      const page = await getAuthenticatedPage(browser, "http://localhost:3000");
+      const page = await getAuthenticatedPage(browser, "https://mega-idle-dev.onrender.com");
 
       await expect(page.locator(".game-shell")).toBeVisible({ timeout: 15000 });
 
@@ -154,7 +165,7 @@ test.describe("Game Journey (authenticated)", () => {
     });
 
     test("tab navigation works", async ({ browser }) => {
-      const page = await getAuthenticatedPage(browser, "http://localhost:3000");
+      const page = await getAuthenticatedPage(browser, "https://mega-idle-dev.onrender.com");
 
       await expect(page.locator(".game-shell")).toBeVisible({ timeout: 15000 });
 
@@ -180,7 +191,7 @@ test.describe("Game Journey (authenticated)", () => {
     });
 
     test("home panel shows territory and hero count", async ({ browser }) => {
-      const page = await getAuthenticatedPage(browser, "http://localhost:3000");
+      const page = await getAuthenticatedPage(browser, "https://mega-idle-dev.onrender.com");
 
       await expect(page.locator(".game-shell")).toBeVisible({ timeout: 15000 });
 
@@ -201,7 +212,7 @@ test.describe("Game Journey (authenticated)", () => {
         test.skip(true, SKIP_REASON);
       }
 
-      const page = await getAuthenticatedPage(browser, "http://localhost:3000");
+      const page = await getAuthenticatedPage(browser, "https://mega-idle-dev.onrender.com");
       await expect(page.locator(".game-shell")).toBeVisible({ timeout: 15000 });
 
       // Verify gold and username are displayed (SSE is what keeps them updated)
@@ -221,7 +232,7 @@ test.describe("Game Journey (authenticated)", () => {
         test.skip(true, SKIP_REASON);
       }
 
-      const page = await getAuthenticatedPage(browser, "http://localhost:3000");
+      const page = await getAuthenticatedPage(browser, "https://mega-idle-dev.onrender.com");
       await expect(page.locator(".game-shell")).toBeVisible({ timeout: 15000 });
 
       // Give SSE time to establish connection and send initial update
@@ -268,7 +279,7 @@ test.describe("Game Journey (authenticated)", () => {
         test.skip(true, SKIP_REASON);
       }
 
-      const page = await getAuthenticatedPage(browser, "http://localhost:3000");
+      const page = await getAuthenticatedPage(browser, "https://mega-idle-dev.onrender.com");
       await expect(page.locator(".game-shell")).toBeVisible({ timeout: 15000 });
 
       // Inject user ID tracking
@@ -306,7 +317,7 @@ test.describe("Game Journey (authenticated)", () => {
         test.skip(true, SKIP_REASON);
       }
 
-      const page = await getAuthenticatedPage(browser, "http://localhost:3000");
+      const page = await getAuthenticatedPage(browser, "https://mega-idle-dev.onrender.com");
       await expect(page.locator(".game-shell")).toBeVisible({ timeout: 15000 });
 
       // The /api/user endpoint calls processIdleTick() before returning
@@ -328,7 +339,7 @@ test.describe("Game Journey (authenticated)", () => {
         test.skip(true, SKIP_REASON);
       }
 
-      const page = await getAuthenticatedPage(browser, "http://localhost:3000");
+      const page = await getAuthenticatedPage(browser, "https://mega-idle-dev.onrender.com");
       await expect(page.locator(".game-shell")).toBeVisible({ timeout: 15000 });
 
       // Wait for first SSE update
@@ -367,14 +378,14 @@ test.describe("Game Journey (authenticated)", () => {
         test.skip(true, SKIP_REASON);
       }
 
-      const page = await getAuthenticatedPage(browser, "http://localhost:3000");
+      const page = await getAuthenticatedPage(browser, "https://mega-idle-dev.onrender.com");
 
       // Navigate away and back to trigger reload
-      await page.goto("http://localhost:3000/");
+      await page.goto("https://mega-idle-dev.onrender.com/");
       await page.waitForTimeout(500);
 
       // Go to game - may briefly show loading
-      await page.goto("http://localhost:3000/game");
+      await page.goto("https://mega-idle-dev.onrender.com/game");
 
       // Check for either loading spinner OR game content
       const loadingOrContent = await page
@@ -390,7 +401,7 @@ test.describe("Game Journey (authenticated)", () => {
     test("error state shows retry button on API failure", async ({ page }) => {
       // We can't easily simulate an API error in E2E without mocking
       // This test verifies the error UI structure exists in the game page
-      await page.goto("http://localhost:3000/");
+      await page.goto("https://mega-idle-dev.onrender.com/");
 
       // Verify error element structure exists (even if not visible in happy path)
       const errorDiv = page.locator(".game-error");

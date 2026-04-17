@@ -35,7 +35,7 @@ async function main() {
   const page = await context.newPage();
 
   console.log("1. Going to landing page...");
-  await page.goto("http://localhost:3000");
+  await page.goto("https://mega-idle-dev.onrender.com");
   await page.waitForLoadState("networkidle");
   console.log("   Landing page loaded");
 
@@ -71,7 +71,19 @@ async function main() {
     console.log("4. No authorize step (already authorized or auto-authorized)");
   }
 
-  console.log("5. Waiting for /game page...");
+  // Handle "App Launched" verification page
+  try {
+    const continueBtn = page.getByRole("button", {
+      name: /continue to discord/i,
+    });
+    await continueBtn.waitFor({ timeout: 5000 });
+    await continueBtn.click();
+    console.log("5. Clicked continue to Discord");
+  } catch {
+    console.log("5. No app launched step");
+  }
+
+  console.log("6. Waiting for /game page...");
   await page.waitForURL(/\/game/, { timeout: 30000 });
   console.log("   Redirected to /game!");
 
