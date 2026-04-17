@@ -4,6 +4,11 @@ const User = require("../models/User");
 const { HeroManagementService } = require("../lib/game/services/HeroManagementService");
 const { subZones } = require("../lib/game/_UNIVERSE/sub-zones");
 
+// Validate subZones at startup
+console.log(`[worker] subZones loaded: ${!!subZones}, keys: ${subZones ? Object.keys(subZones).join(",") : "N/A"}`);
+console.log(`[worker] subZones[1]: ${subZones?.[1] ? "exists" : "UNDEFINED"}`);
+console.log(`[worker] subZones[3]: ${subZones?.[3] ? "exists" : "UNDEFINED"}`);
+
 const MONGODB_URI = process.env.MONGODB_URI;
 const WANDERING_SPAWN_CHANCE = 0.3;
 
@@ -74,15 +79,28 @@ async function processExploration(user) {
   const heroName = exploringHeroes[0].name;
 
   console.log(`[exploration] Hero ${heroName}: zone=${heroZone} subZone=${heroSubZone}`);
-  console.log(`[exploration] subZones keys: ${Object.keys(subZones).join(",")}`);
-  console.log(`[exploration] subZones[${heroZone}]: ${subZones[heroZone] ? "exists" : "UNDEFINED"}`);
-
+  console.log(`[exploration] subZones keys: ${subZones ? Object.keys(subZones).join(",") : "NULL/UNDEFINED"}`);
+  console.log(`[exploration] subZones[${heroZone}]: ${subZones?.[heroZone] ? "exists" : "UNDEFINED"}`);
+  if (!subZones) {
+    console.log(`[exploration] FATAL: subZones is null/undefined!`);
+    return;
+  }
   if (!subZones[heroZone]) {
-    console.log(`[exploration] FATAL: subZones[${heroZone}] is undefined! State zone=${user.explorationState?.zone}`);
+    console.log(`[exploration] FATAL: subZones[${heroZone}] is undefined!`);
+    console.log(`[exploration] This suggests the subZones module may not be loading correctly on Render.`);
+    console.log(`[exploration] Hero zone=${heroZone} subZone=${heroSubZone} from explorationState zone=${user.explorationState?.zone}`);
     return;
   }
 
   const zoneData = subZones[heroZone];
+  console.log(`[exploration] zoneData.sub_zones: ${zoneData?.sub_zones ? "exists" : "UNDEFINED"}`);
+  console.log(`[exploration] zoneData.name: ${zoneData?.name || "N/A"}`);
+
+  if (!zoneData?.sub_zones) {
+    console.log(`[exploration] FATAL: zoneData.sub_zones is missing! zoneData=${JSON.stringify(zoneData)}`);
+    return;
+  }
+
   const subZoneData = zoneData.sub_zones.find(sz => sz.id === heroSubZone);
   if (!subZoneData) {
     console.log(`[exploration] Invalid subZone ${heroSubZone} in zone ${heroZone}`);
