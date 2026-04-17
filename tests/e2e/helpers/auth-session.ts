@@ -136,3 +136,8 @@ export async function authenticatedPage(
 
   return page;
 }
+
+/**
+ * Alias for authenticatedPage for backward compatibility
+ */
+export const getAuthenticatedPage = authenticatedPage;
