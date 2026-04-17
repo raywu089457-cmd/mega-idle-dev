@@ -81,20 +81,21 @@ export default function DebugPanel() {
     await callDebug("unlockZone", { zone });
   }
 
-  async function abandonKingdom() {
-    if (!window.confirm("⚠️ 確定要拋棄王國嗎？所有資料將被永久刪除，此操作無法復原！")) return;
-    if (!window.confirm("再次確認：刪除後你的帳號、英雄、建築、軍隊、資源將全部消失。是否繼續？")) return;
+  async function deleteAccount() {
+    if (!window.confirm("⚠️ 確定要刪除帳號嗎？所有遊戲資料將被永久刪除，此操作無法復原！")) return;
+    if (!window.confirm("再次確認：刪除後你的 Discord 帳號將解除註冊，下次登入會重新創建角色。是否繼續？")) return;
     setLoading(true);
     setMsg(null);
     try {
       const res = await api("/api/debug", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "abandonKingdom" }),
+        body: JSON.stringify({ action: "deleteAccount" }),
       });
       const json = await res.json();
       if (json.success) {
-        setMsg("王國已刪除，正在跳轉...");
+        setMsg("帳號已刪除，正在重新登入...");
+        // Redirect to home after signOut completes
         setTimeout(() => window.location.href = "/", 1500);
       } else {
         setMsg(`錯誤: ${json.error}`);
@@ -216,8 +217,8 @@ export default function DebugPanel() {
       <section className="debug-section danger">
         <h3>☠️ 危險操作</h3>
         <div className="debug-row">
-          <button onClick={abandonKingdom} disabled={loading} className="btn-danger">
-            拋棄王國（刪除帳號）
+          <button onClick={deleteAccount} disabled={loading} className="btn-danger">
+            刪除帳號（重新註冊）
           </button>
         </div>
       </section>

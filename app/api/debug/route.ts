@@ -1,8 +1,10 @@
 import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
+import { signOut } from "next-auth/react";
 import { connectDB } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
 import User from "@/models/User";
+import { HeroManagementService } from "@/lib/game/services/HeroManagementService";
 
 async function getUser() {
   const session = await getServerSession(authOptions);
@@ -22,7 +24,7 @@ const VALID_ACTIONS = [
   "resetHeroHunger",
   "addExp",
   "unlockZone",
-  "abandonKingdom",
+  "deleteAccount",
 ];
 
 export async function POST(request: Request) {
@@ -70,9 +72,7 @@ export async function POST(request: Request) {
       }
       case "triggerTick": {
         const count = Math.min(100, Math.max(1, parseInt(params.count) || 1));
-        // Process idle tick manually
         user.lastTick = new Date(Date.now() - count * 5000);
-        // Recalculate resources from production
         const monument = user.buildings?.monument;
         if (monument?.level > 0) {
           const production = 2 * monument.level * count;
@@ -83,18 +83,19 @@ export async function POST(request: Request) {
       }
       case "spawnHero": {
         const num = Math.min(10, Math.max(1, parseInt(params.count) || 1));
-        const spawned = [];
+        const spawned: string[] = [];
         for (let i = 0; i < num; i++) {
-          const hero = user.spawnWanderingHero();
-          if (hero) spawned.push(hero.name);
+          const hero = HeroManagementService.createWanderingHero(user);
+          if (hero) {
+            spawned.push(hero.name);
+          }
         }
+        await user.save();
         result = { spawned };
         break;
       }
       case "resetCooldowns": {
-        if (user.cooldowns) {
-          user.cooldowns = {};
-        }
+        user.cooldowns = {};
         result = { cooldowns: {} };
         break;
       }
@@ -112,13 +113,11 @@ export async function POST(request: Request) {
       }
       case "resetHeroHunger": {
         const heroes = user.heroes?.roster || [];
-        let reset = 0;
         for (const hero of heroes) {
           hero.hunger = 100;
           hero.thirst = 100;
-          reset++;
         }
-        result = { reset };
+        result = { reset: heroes.length };
         break;
       }
       case "addExp": {
@@ -139,10 +138,13 @@ export async function POST(request: Request) {
         result = { unlockedZones: user.unlockedZones };
         break;
       }
-      case "abandonKingdom": {
-        const userId = user.userId;
-        await User.deleteOne({ userId });
-        result = { deleted: true, userId };
+      case "deleteAccount": {
+        // 1. Delete MongoDB user document
+        await User.deleteOne({ userId: user.userId });
+        // 2. Sign out so JWT is cleared and user can re-register via Discord OAuth
+        //    We pass redirect: false because we want to return JSON, not redirect
+        await signOut({ redirect: false });
+        result = { deleted: true, userId: user.userId, needsReLogin: true };
         break;
       }
       default:

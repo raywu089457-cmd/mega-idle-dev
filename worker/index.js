@@ -67,9 +67,9 @@ async function broadcast(userId, userData) {
  * TURN-BASED: Execute ONE round per tick, tracking combat state
  */
 async function processExploration(user) {
-  // Defensive: ensure heroes.roster exists
-  if (!user.heroes?.roster) {
-    console.error(`[exploration] User ${user.userId} has no heroes.roster, skipping`);
+  // Defensive: ensure heroes.roster exists and is an array
+  if (!user.heroes?.roster || !Array.isArray(user.heroes.roster)) {
+    console.error(`[exploration] User ${user.userId} has no heroes.roster (heroes=${JSON.stringify(user.heroes)}), skipping`);
     return;
   }
   const exploringHeroes = user.heroes.roster.filter(h => h.isExploring);
@@ -287,19 +287,19 @@ async function processAllUsers() {
         gold: user.gold,
         goldCapacity: user.goldCapacity,
         magicStones: user.magicStones,
-        materials: Object.fromEntries(user.materials),
+        materials: user.materials instanceof Map ? Object.fromEntries(user.materials.entries()) : user.materials,
         materialCapacity: user.materialCapacity,
         buildings: user.buildings,
         heroes: {
-          roster: user.heroes?.roster || [],
+          roster: Array.isArray(user.heroes?.roster) ? user.heroes.roster : [],
           territoryHeroCap: user.territoryHeroCap,
           wanderingHeroCap: user.wanderingHeroCap,
         },
-        teams: Object.fromEntries(user.teams),
+        teams: user.teams instanceof Map ? Object.fromEntries(user.teams.entries()) : user.teams,
         battleLogs: user.battleLogs,
         guild: user.guild,
         statistics: user.statistics,
-        unlockedZones: user.unlockedZones,
+        unlockedZones: Array.isArray(user.unlockedZones) ? user.unlockedZones : [],
         worldBoss: user.worldBoss,
         cooldowns: user.cooldowns,
         lastActiveTime: user.statistics?.lastActiveTime,

@@ -573,7 +573,8 @@ userSchema.methods.processIdleTick = function() {
     });
 
     // Defensive gold cap after monument production loop
-    this.gold = Math.min(this.gold, this.goldCapacity);
+    // Guard against undefined gold (old documents created before this field existed)
+    this.gold = Math.min(this.gold ?? 0, this.goldCapacity);
   }
 
   // 2. Tavern Production - consumes fruit + water -> rations + drinking_water
