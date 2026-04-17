@@ -47,8 +47,31 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { heroId } = body;
+    const { action, heroId } = body;
 
+    // Handle recruit action - auto-select a random wandering hero
+    if (action === "recruit") {
+      const wanderingHeroes = user.getWanderingHeroes();
+      if (wanderingHeroes.length === 0) {
+        return NextResponse.json({ success: false, error: "沒有流浪英雄可招募" }, { status: 400 });
+      }
+      // Pick a random wandering hero
+      const randomHero = wanderingHeroes[Math.floor(Math.random() * wanderingHeroes.length)];
+      const result = HeroManagementService.recruitFromTavern(user, randomHero.id);
+      if (!result.success) {
+        return NextResponse.json({ success: false, error: result.reason }, { status: 400 });
+      }
+      await user.save();
+      return NextResponse.json({
+        success: true,
+        data: {
+          message: `成功招募 ${result.hero.name}`,
+          hero: result.hero,
+        },
+      });
+    }
+
+    // Handle single hero recruitment by ID (legacy support)
     if (!heroId) {
       return NextResponse.json({ success: false, error: "缺少 heroId" }, { status: 400 });
     }
