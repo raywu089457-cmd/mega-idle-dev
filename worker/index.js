@@ -50,6 +50,7 @@ async function broadcast(userId, userData) {
  */
 async function processExploration(user) {
   const exploringHeroes = user.heroes.roster.filter(h => h.isExploring);
+  console.log(`[exploration] user:${user.userId} exploring:${exploringHeroes.length} state:${user.explorationState ? "has_state" : "no_state"}`);
 
   if (exploringHeroes.length === 0) {
     // Clear exploration state if no heroes exploring
@@ -71,7 +72,10 @@ async function processExploration(user) {
   const dispatchCooldown = user.cooldowns?.dispatch;
   if (dispatchCooldown) {
     const cooldownElapsed = Date.now() - new Date(dispatchCooldown).getTime();
-    if (cooldownElapsed < 3000) return;
+    if (cooldownElapsed < 3000) {
+      console.log(`[exploration] Cooldown active, skipping. elapsed:${cooldownElapsed}ms`);
+      return;
+    }
   }
 
   // Initialize or continue exploration combat
@@ -106,6 +110,7 @@ async function processExploration(user) {
     };
 
     user.cooldowns.dispatch = new Date();
+    console.log(`[exploration] New combat started - zone:${exploringHeroes[0].currentZone} subZone:${exploringHeroes[0].currentSubZone} enemy:${primaryMonster.name} HP:${primaryMonster.hp}`);
     await user.save();
     return; // First tick just sets up state, no combat round yet
   }
@@ -182,6 +187,7 @@ async function processExploration(user) {
     }
 
     // Add battle log
+    console.log(`[exploration] Combat ended - victory:${victory} zone:${state.zone} subZone:${state.subZone} heroes:${state.heroes.map(h=>h.name).join(",")}`);
     user.addBattleLog({
       category: state.heroes.length > 1 ? "team_combat" : "solo_combat",
       zone: state.zone,
