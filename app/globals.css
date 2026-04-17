@@ -148,6 +148,7 @@ html, body {
 .btn-remove:hover { color: var(--danger); }
 .msg { font-size: 0.8rem; color: var(--text2); }
 .empty { color: var(--text3); font-size: 0.85rem; text-align: center; padding: 1rem; }
+.hint { font-size: 0.8rem; color: var(--text3); margin-left: 0.5rem; }
 
 /* Hero list */
 .hero-list { display: flex; flex-direction: column; gap: 0.5rem; max-height: 400px; overflow-y: auto; }
@@ -156,6 +157,7 @@ html, body {
   border-radius: 8px; border: 1px solid var(--border);
 }
 .hero-row.exploring { border-color: var(--accent); }
+.hero-row.selected { border-color: var(--gold); background: var(--surface3); box-shadow: 0 0 0 2px var(--gold); }
 .hero-info { display: flex; align-items: center; gap: 0.5rem; }
 .hero-name { font-weight: 700; font-size: 0.9rem; }
 .hero-lv { font-size: 0.75rem; color: var(--text2); }

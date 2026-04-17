@@ -177,12 +177,24 @@ export default function HeroesPanel({ data, api }: Props) {
     setRecruiting(true);
     setMsg(null);
     try {
-      const res = await api("/api/heroes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "recruit", heroType: tab }),
-      });
-      setMsg(`招募成功: ${res.data?.hero?.name || "新英雄"}`);
+      // If on wandering tab and a hero is selected, recruit that specific hero
+      if (tab === "wandering" && selectedHero) {
+        const res = await api("/api/heroes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ heroId: selectedHero.id }),
+        });
+        setMsg(`成功招募 ${selectedHero.name}`);
+        setSelectedHero(null);
+      } else {
+        // Otherwise auto-select a random wandering hero
+        const res = await api("/api/heroes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "recruit" }),
+        });
+        setMsg(`招募成功: ${res.data?.hero?.name || "新英雄"}`);
+      }
     } catch (e) {
       setMsg(e instanceof Error ? e.message : "招募失敗");
     } finally {
@@ -224,7 +236,7 @@ export default function HeroesPanel({ data, api }: Props) {
           return (
             <div
               key={h.id}
-              className={`hero-row ${h.isExploring ? "exploring" : ""} ${needsAttention ? "needs-attention" : ""}`}
+              className={`hero-row ${h.isExploring ? "exploring" : ""} ${needsAttention ? "needs-attention" : ""} ${selectedHero?.id === h.id ? "selected" : ""}`}
               onClick={() => setSelectedHero(h)}
             >
               <div className="hero-info">
@@ -253,12 +265,15 @@ export default function HeroesPanel({ data, api }: Props) {
 
       <div className="panel-footer">
         <button className="btn-primary" onClick={recruit} disabled={recruiting || used >= cap}>
-          {recruiting ? "招募中..." : `招募${getLabel(tab)}英雄`}
+          {recruiting ? "招募中..." : tab === "wandering" && selectedHero ? `招募 ${selectedHero.name}` : `招募${getLabel(tab)}英雄`}
         </button>
         {tab === "wandering" && wanderingHeroes.length > 0 && territoryCapUsed < territoryCap && (
           <button className="btn-secondary" onClick={recruitAll} disabled={recruiting}>
             招募全部流浪英雄
           </button>
+        )}
+        {tab === "wandering" && !selectedHero && wanderingHeroes.length > 0 && (
+          <span className="hint">點擊英雄選擇後再點招募</span>
         )}
         {msg && <span className="msg">{msg}</span>}
       </div>

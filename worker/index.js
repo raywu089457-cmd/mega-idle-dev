@@ -1,17 +1,23 @@
 /**
  * Phase 5 Background Worker
  * Runs idle tick processing for all users every 5 seconds.
- * Handles monument production, tavern, potion shop, and wandering hero spawning.
- * Calls internal broadcast endpoint after each user tick.
+ * Handles:
+ * - Monument, tavern, potion shop production
+ * - Exploration battles for dispatched heroes
+ * - Wandering hero spawning
+ * - Broadcast updates to connected clients
  */
 
 const mongoose = require("mongoose");
 const axios = require("axios");
 const User = require("../models/User");
 const { HeroManagementService } = require("../lib/game/services/HeroManagementService");
+const { CombatResolver } = require("../lib/game/combat/CombatResolver");
+const subZones = require("../lib/game/_UNIVERSE/sub-zones");
 
 const TICK_INTERVAL_MS = 5000;
 const WANDERING_SPAWN_CHANCE = 0.30;
+const EXPLORATION_DURATION_MS = 30000; // 30 seconds per exploration
 
 async function connectDB() {
   const MONGODB_URI = process.env.MONGODB_URI;
@@ -51,6 +57,113 @@ async function broadcast(userId, userData) {
   }
 }
 
+/**
+ * Process exploration battles for a user's dispatched heroes
+ */
+async function processExploration(user) {
+  const exploringHeroes = user.heroes.roster.filter(h => h.isExploring);
+
+  if (exploringHeroes.length === 0) return;
+
+  // Get zone data
+  const zoneData = subZones[exploringHeroes[0].currentZone];
+  if (!zoneData) return;
+
+  const subZoneData = zoneData.sub_zones.find(sz => sz.id === exploringHeroes[0].currentSubZone);
+  if (!subZoneData) return;
+
+  // Run combat
+  const resolver = new CombatResolver();
+  const result = resolver.resolveCombat(exploringHeroes, {
+    monsters: subZoneData.monsters,
+    difficulty: subZoneData.difficulty,
+    gold_reward: subZoneData.gold_reward,
+    stone_drop: subZoneData.stone_drop,
+    xp_multiplier: subZoneData.xp_multiplier,
+    is_boss: subZoneData.is_boss,
+    is_elite: subZoneData.is_elite,
+  }, 0);
+
+  // Apply results to each hero
+  for (const hero of exploringHeroes) {
+    if (result.victory) {
+      // Victory rewards
+      hero.experience += Math.floor(result.xpGained / exploringHeroes.length);
+      hero.lastZone = hero.currentZone;
+      hero.lastSubZone = hero.currentSubZone;
+    } else {
+      // Defeat - lose some hunger/thirst, reduced HP (revived at half HP by CombatResolver)
+      hero.hunger = Math.max(0, hero.hunger - 10);
+      hero.thirst = Math.max(0, hero.thirst - 10);
+    }
+
+    // Consume rations and water if available
+    if (hero.hunger < 50 && user.materials.get("rations") > 0) {
+      user.materials.set("rations", user.materials.get("rations") - 1);
+      hero.hunger = Math.min(100, hero.hunger + 30);
+    }
+    if (hero.thirst < 50 && user.materials.get("drinking_water") > 0) {
+      user.materials.set("drinking_water", user.materials.get("drinking_water") - 1);
+      hero.thirst = Math.min(100, hero.thirst + 30);
+    }
+  }
+
+  // Give gold reward
+  if (result.goldReward > 0) {
+    user.gold = (user.gold || 0) + result.goldReward;
+  }
+
+  // Magic stone drops
+  if (result.magicStonesFound > 0) {
+    user.magicStones = (user.magicStones || 0) + result.magicStonesFound;
+  }
+
+  // Material drops
+  for (const [mat, amount] of Object.entries(result.materialsFound)) {
+    const current = user.materials.get(mat) || 0;
+    user.materials.set(mat, current + amount);
+  }
+
+  // Update user statistics
+  if (result.victory) {
+    user.statistics.wins = (user.statistics.wins || 0) + 1;
+  } else {
+    user.statistics.losses = (user.statistics.losses || 0) + 1;
+  }
+  user.statistics.explorations = (user.statistics.explorations || 0) + 1;
+  user.statistics.goldEarned = (user.statistics.goldEarned || 0) + result.goldReward;
+
+  // Add battle log
+  user.addBattleLog({
+    category: exploringHeroes.length > 1 ? "team_combat" : "solo_combat",
+    zone: exploringHeroes[0].currentZone,
+    difficulty: exploringHeroes[0].currentSubZone,
+    teamIdx: exploringHeroes[0].currentTeamIdx,
+    heroNames: exploringHeroes.map(h => h.name),
+    victory: result.victory,
+    damageDealt: result.victory ? result.goldReward * 10 : 0,
+    goldReward: result.goldReward,
+    xpGained: result.xpGained,
+    logMessages: result.logMessages,
+  });
+
+  // Reset exploration state
+  for (const hero of exploringHeroes) {
+    hero.isExploring = false;
+    hero.currentZone = null;
+    hero.currentSubZone = null;
+    user.removeHeroFromTeam(hero.id);
+  }
+
+  // Unlock next zone if boss was defeated
+  if (result.victory && subZoneData.is_boss && user.unlockedZones) {
+    const nextZone = exploringHeroes[0].currentZone + 1;
+    if (nextZone <= 10 && !user.unlockedZones.includes(nextZone)) {
+      user.unlockedZones.push(nextZone);
+    }
+  }
+}
+
 async function processAllUsers() {
   const users = await User.find({});
   console.log(`[tick] Processing ${users.length} user(s)`);
@@ -60,7 +173,10 @@ async function processAllUsers() {
       // 1. Run idle tick (monument production, tavern, potion shop)
       await user.processIdleTick();
 
-      // 2. Wandering hero spawning (30% chance per user per tick if under cap)
+      // 2. Process exploration battles
+      await processExploration(user);
+
+      // 3. Wandering hero spawning (30% chance per user per tick if under cap)
       const canSpawnWandering =
         user.heroes.usedWanderingSlots < user.wanderingHeroCap;
       if (canSpawnWandering && Math.random() < WANDERING_SPAWN_CHANCE) {
@@ -68,7 +184,7 @@ async function processAllUsers() {
         await user.save();
       }
 
-      // 3. Broadcast update to connected clients (full snapshot matching /api/user response)
+      // 4. Broadcast update to connected clients (full snapshot matching /api/user response)
       const userData = {
         userId: user.userId,
         username: user.username,
@@ -84,7 +200,7 @@ async function processAllUsers() {
           wanderingHeroCap: user.wanderingHeroCap,
         },
         teams: Object.fromEntries(user.teams),
-        battleLogs: user.battleHistory,
+        battleLogs: user.battleLogs,
         guild: user.guild,
         statistics: user.statistics,
         unlockedZones: user.unlockedZones,
@@ -114,7 +230,7 @@ async function main() {
     try {
       await processAllUsers();
     } catch (err) {
-      console.error("[worker] Tick error:", err.message);
+      console.error("[tick] Tick error:", err.message);
     }
   }, TICK_INTERVAL_MS);
 
