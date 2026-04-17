@@ -6,9 +6,18 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest",
+    "test:unit:coverage": "vitest run --coverage",
+    "test:api": "playwright test --config=playwright.api.config.ts",
+    "test:e2e": "playwright test --config=playwright.config.ts",
+    "test:all": "bash scripts/run-evals.sh",
+    "eval:report": "node scripts/eval-report.js",
+    "eval:baseline": "node scripts/eval-report.js --save-baseline"
   },
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "mongoose": "^9.4.1",
     "next": "16.2.4",
     "next-auth": "^4.24.14",
@@ -17,11 +26,14 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",
+    "@types/bcrypt": "^6.0.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^3.2.4",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.4"
   }
 }
