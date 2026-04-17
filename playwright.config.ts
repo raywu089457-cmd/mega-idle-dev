@@ -20,11 +20,11 @@ export default defineConfig({
       ]
     : [["list"]],
 
-  timeout: 30000,
-  expect: { timeout: 10000 },
+  timeout: 600000,
+  expect: { timeout: 30000 },
 
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL: "https://mega-idle-dev.onrender.com",
     trace: "on-first-retry",
     screenshot: "only-on-failure",
     video: "on-first-retry",
