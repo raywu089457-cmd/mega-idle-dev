@@ -67,6 +67,11 @@ async function broadcast(userId, userData) {
  * TURN-BASED: Execute ONE round per tick, tracking combat state
  */
 async function processExploration(user) {
+  // Defensive: ensure heroes.roster exists
+  if (!user.heroes?.roster) {
+    console.error(`[exploration] User ${user.userId} has no heroes.roster, skipping`);
+    return;
+  }
   const exploringHeroes = user.heroes.roster.filter(h => h.isExploring);
 
   if (exploringHeroes.length === 0) {
