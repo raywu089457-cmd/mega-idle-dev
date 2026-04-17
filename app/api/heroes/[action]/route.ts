@@ -2,14 +2,14 @@ import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
-import User from "@/models/User";
+import { UserRepository } from "@/lib/repositories/UserRepository";
 import { HeroManagementService } from "@/lib/game/services/HeroManagementService";
 
 async function getUser() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return null;
   await connectDB();
-  return User.findOne({ userId: session.user.id }) as Promise<any>;
+  return UserRepository.findByIdActive(session.user.id);
 }
 
 const VALID_ACTIONS = ["train", "feed", "water", "potion", "expel", "recruit-all"];

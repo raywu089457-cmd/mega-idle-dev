@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth/next";
 import { connectDB } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
-import User from "@/models/User";
+import { UserRepository } from "@/lib/repositories/UserRepository";
 import { broadcast } from "@/lib/broadcast";
 
 export async function GET() {
@@ -12,27 +12,14 @@ export async function GET() {
 
   await connectDB();
 
-  // Find or create user (Discord snowflake ID matches existing MongoDB userId)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let user: any = await User.findOne({ userId: session.user.id });
+  let user = await UserRepository.findByIdActive(session.user.id);
 
   if (!user) {
-    // User was deleted but Discord OAuth session is still valid server-side.
-    // Do NOT auto-recreate — return 401 so the client shows a re-auth prompt.
-    // The JWT will be invalidated by the next auth refresh attempt.
     return Response.json(
       { error: "帳號已刪除，請重新登入", code: "ACCOUNT_DELETED" },
       { status: 401 }
     );
   }
-
-  // Process offline gains
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (user as any).processIdleTick();
-
-  // Refresh after tick
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  user = (await User.findOne({ userId: session.user.id })) as any;
 
   const snapshot = {
     userId: user.userId,

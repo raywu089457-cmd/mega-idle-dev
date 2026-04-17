@@ -2,17 +2,14 @@ import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
-import User from "@/models/User";
-import ITEMS from "@/lib/game/_CONSTS/items";
-type ItemEntry = { name: string; type: string; stats?: { attack: number; defense: number; hp: number }; cost?: Record<string, number>; healing?: number };
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const ITEMS_TYPED: Record<string, ItemEntry> = ITEMS as any;
+import { UserRepository } from "@/lib/repositories/UserRepository";
+import { ITEMS } from "@/lib/game/types/items";
 
 async function getUser() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return null;
   await connectDB();
-  return User.findOne({ userId: session.user.id }) as Promise<any>;
+  return UserRepository.findByIdActive(session.user.id);
 }
 
 export async function GET() {
@@ -66,7 +63,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: false, error: "探索中的英雄無法裝備" }, { status: 400 });
       }
 
-      const item = ITEMS_TYPED[itemId as string];
+      const item = ITEMS[itemId as string];
       if (!item) {
         return NextResponse.json({ success: false, error: "物品不存在" }, { status: 404 });
       }
@@ -87,7 +84,7 @@ export async function POST(request: Request) {
       }
       const currentEquipped = hero.equipment[slot];
       if (currentEquipped) {
-        const curItem = ITEMS_TYPED[currentEquipped as string];
+        const curItem = ITEMS[currentEquipped as string];
         if (curItem) {
           const curInvKey = typeToInv[curItem.type];
           if (curInvKey) {
@@ -119,7 +116,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: false, error: "該槽位沒有裝備" }, { status: 400 });
       }
 
-      const item = ITEMS_TYPED[itemId as string];
+      const item = ITEMS[itemId as string];
       if (!item) {
         return NextResponse.json({ success: false, error: "物品不存在" }, { status: 404 });
       }

@@ -2,13 +2,14 @@ import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
-import User from "@/models/User";
+import { UserRepository } from "@/lib/repositories/UserRepository";
+import { DispatchSchema } from "@/lib/validation/schemas";
 
 async function getUser() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return null;
   await connectDB();
-  return User.findOne({ userId: session.user.id }) as Promise<any>;
+  return UserRepository.findByIdActive(session.user.id);
 }
 
 export async function POST(request: Request) {
@@ -19,7 +20,14 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { heroIds, zone, subZone, action } = body;
+    const parsed = DispatchSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({
+        success: false,
+        error: parsed.error.issues.map((e: { message: string }) => e.message).join(", ")
+      }, { status: 400 });
+    }
+    const { heroIds, zone, subZone, action } = parsed.data;
 
     // Handle recall action
     if (action === "recall") {

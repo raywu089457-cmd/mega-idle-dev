@@ -2,13 +2,13 @@ import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
-import User from "@/models/User";
+import { UserRepository } from "@/lib/repositories/UserRepository";
 
 async function getUser() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return null;
   await connectDB();
-  return User.findOne({ userId: session.user.id }) as Promise<any>;
+  return UserRepository.findByIdActive(session.user.id);
 }
 
 export async function POST() {

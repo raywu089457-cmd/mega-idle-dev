@@ -2,33 +2,15 @@ import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
-import User from "@/models/User";
+import { UserRepository } from "@/lib/repositories/UserRepository";
+import { BUILDING_COST_FORMULAS, VALID_BUILDINGS } from "@/lib/game/formulas/buildingCosts";
 
 async function getUser() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return null;
   await connectDB();
-  return User.findOne({ userId: session.user.id }) as Promise<any>;
+  return UserRepository.findByIdActive(session.user.id);
 }
-
-// Building cost formulas
-const BUILDING_COSTS: Record<string, (level: number) => Record<string, number>> = {
-  castle: (level) => ({ gold: Math.floor(100 * Math.pow(level, 2)) }),
-  tavern: (level) => ({ gold: Math.floor(50 * Math.pow(level, 2)), wood: Math.floor(20 * level) }),
-  monument: (level) => ({ gold: Math.floor(80 * Math.pow(level, 2)) }),
-  warehouse: (level) => ({ gold: Math.floor(30 * Math.pow(level, 2)), wood: Math.floor(15 * level) }),
-  weaponShop: (level) => ({ gold: Math.floor(40 * Math.pow(level, 2)) }),
-  armorShop: (level) => ({ gold: Math.floor(40 * Math.pow(level, 2)) }),
-  potionShop: (level) => ({ gold: Math.floor(40 * Math.pow(level, 2)) }),
-  lumberMill: (level) => ({ gold: Math.floor(60 * Math.pow(level, 2)), wood: Math.floor(20 * level) }),
-  mine: (level) => ({ gold: Math.floor(60 * Math.pow(level, 2)), iron: Math.floor(20 * level) }),
-  herbGarden: (level) => ({ gold: Math.floor(60 * Math.pow(level, 2)), herbs: Math.floor(20 * level) }),
-  guildHall: (level) => ({ gold: Math.floor(100 * Math.pow(level, 2)), wood: Math.floor(30 * level), iron: Math.floor(10 * level) }),
-  barracks: (level) => ({ gold: Math.floor(100 * Math.pow(level, 2)), wood: Math.floor(30 * level), iron: Math.floor(10 * level) }),
-  archery: (level) => ({ gold: Math.floor(80 * Math.pow(level, 2)), wood: Math.floor(40 * level) }),
-};
-
-const VALID_BUILDINGS = Object.keys(BUILDING_COSTS);
 
 export async function POST(request: Request) {
   try {
@@ -54,7 +36,7 @@ export async function POST(request: Request) {
       if (currentLevel > 0) {
         return NextResponse.json({ success: false, error: "建築已存在，請使用升級" }, { status: 400 });
       }
-      const cost = BUILDING_COSTS[building](1);
+      const cost = BUILDING_COST_FORMULAS[building](1);
       const result = user.buildStructure(building, cost);
       if (!result.success) {
         return NextResponse.json({ success: false, error: result.reason }, { status: 400 });
@@ -74,7 +56,7 @@ export async function POST(request: Request) {
       if (nextLevel > 10) {
         return NextResponse.json({ success: false, error: "已達最高等級" }, { status: 400 });
       }
-      const cost = BUILDING_COSTS[building](nextLevel);
+      const cost = BUILDING_COST_FORMULAS[building](nextLevel);
       const result = user.upgradeBuilding(building, cost);
       if (!result.success) {
         return NextResponse.json({ success: false, error: result.reason }, { status: 400 });

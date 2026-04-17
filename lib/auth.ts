@@ -4,20 +4,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { DefaultSession } from "next-auth";
 import { connectDB } from "@/lib/db";
 import User from "@/models/User";
-
-// Track userIds whose accounts have been deleted.
-// Keyed by auth type so we can invalidate the right JWT sessions.
-// Discord: numeric snowflake. Email: email_<ts>_<random>.
-const deletedDiscordUserIds = new Set<string>();
-const deletedEmailUserIds = new Set<string>();
-
-export function markUserDeleted(userId: string, authProvider: "discord" | "email") {
-  if (authProvider === "discord") {
-    deletedDiscordUserIds.add(userId);
-  } else {
-    deletedEmailUserIds.add(userId);
-  }
-}
+import { UserRepository } from "@/lib/repositories/UserRepository";
 
 declare module "next-auth" {
   interface Session {
@@ -59,25 +46,28 @@ export const authOptions: AuthOptions = {
   },
   callbacks: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    session({ session, token }: any) {
+    async session({ session, token }: any) {
       if (session?.user && token?.sub) {
+        // Check if user was soft-deleted — invalidate session if so
+        await connectDB();
+        const user = await UserRepository.findById(token.sub);
+        if (user?.deletedAt) return { ...session, user: { ...session.user, id: token.sub } };
         session.user.id = token.sub;
       }
       return session;
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    jwt({ token, account }: any) {
+    async jwt({ token, account }: any) {
       if (account) {
         token.accessToken = account.access_token;
         return token;
       }
-      // Session restoration from cookie — check if this user was deleted.
+      // Session restoration from cookie — check if this user was soft-deleted.
       // If so, return null to force re-auth and prevent silent account recreation.
       if (token.sub) {
-        const isDeleted =
-          deletedDiscordUserIds.has(token.sub) ||
-          deletedEmailUserIds.has(token.sub);
-        if (isDeleted) return null;
+        await connectDB();
+        const user = await UserRepository.findById(token.sub);
+        if (user?.deletedAt) return null;
       }
       return token;
     },

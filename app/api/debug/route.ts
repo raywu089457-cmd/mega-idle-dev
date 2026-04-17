@@ -1,15 +1,15 @@
 import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
-import { authOptions, markUserDeleted } from "@/lib/auth";
-import User from "@/models/User";
+import { authOptions } from "@/lib/auth";
+import { UserRepository } from "@/lib/repositories/UserRepository";
 import { HeroManagementService } from "@/lib/game/services/HeroManagementService";
 
 async function getUser() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return null;
   await connectDB();
-  return User.findOne({ userId: session.user.id }) as Promise<any>;
+  return UserRepository.findByIdActive(session.user.id);
 }
 
 const VALID_ACTIONS = [
@@ -138,10 +138,8 @@ export async function POST(request: Request) {
         break;
       }
       case "deleteAccount": {
-        // Determine provider from user document
-        const authProvider = (user as any).authProvider || "discord";
-        markUserDeleted(user.userId, authProvider);
-        await User.deleteOne({ userId: user.userId });
+        // Use soft delete via UserRepository
+        await UserRepository.softDelete(user.userId);
         result = { deleted: true, userId: user.userId, needsReLogin: true };
         break;
       }

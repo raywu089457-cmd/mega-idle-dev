@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { GameData, Hero, useGameData } from "../hooks/useGameData";
+import { getXpForLevel } from "@/lib/game/formulas/xp";
 
 interface Props {
   data: GameData;
@@ -11,10 +12,6 @@ interface Props {
 const RARITY_COLOR: Record<string, string> = { S: "#ff6b6b", A: "#ffa500", B: "#ffd700", C: "#4ade80", D: "#60a5fa", E: "#a78bfa", F: "#9ca3af" };
 const SLOT_NAMES = ["weapon", "armor", "helmet", "accessory"] as const;
 const SLOT_ICONS: Record<string, string> = { weapon: "⚔️", armor: "🛡️", helmet: "⛑️", accessory: "💍" };
-
-function getXpForLevel(level: number): number {
-  return Math.floor(100 * Math.pow(level, 1.5));
-}
 
 interface HeroDetailProps {
   hero: Hero;

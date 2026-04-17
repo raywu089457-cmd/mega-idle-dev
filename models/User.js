@@ -61,6 +61,9 @@ const userSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
   lastTick: { type: Date, default: Date.now },
 
+  // Soft delete - timestamp when user deleted, null if active
+  deletedAt: { type: Date, default: null },
+
   // World Boss state
   worldBoss: {
     totalDamage: { type: Number, default: 0 },
@@ -307,6 +310,12 @@ const userSchema = new mongoose.Schema({
   currentZone: { type: Number, default: 1 },
   defeatedBosses: { type: [Number], default: [] },
 }, { versionKey: false });
+
+// =============================================================================
+// Indexes for soft delete and query performance
+// =============================================================================
+userSchema.index({ deletedAt: 1 });
+userSchema.index({ userId: 1, deletedAt: 1 });
 
 // =============================================================================
 // Virtual Getters

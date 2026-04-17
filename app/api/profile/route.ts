@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth/next";
 import { connectDB } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
-import User from "@/models/User";
+import { UserRepository } from "@/lib/repositories/UserRepository";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -11,34 +11,27 @@ export async function GET() {
 
   await connectDB();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let user: any = await User.findOne({ userId: session.user.id });
+  let user = await UserRepository.findByIdActive(session.user.id);
 
   if (!user) {
-    user = new User({
-      userId: session.user.id,
-      username: session.user.name || `Player_${session.user.id.slice(-4)}`,
-      lastTick: new Date(),
-    });
-    await user.save();
-    user = await User.findOne({ userId: session.user.id });
+    user = await UserRepository.findOrCreate(
+      session.user.id,
+      session.user.name || `Player_${session.user.id.slice(-4)}`
+    );
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const u = user as any;
-
   return Response.json({
-    userId: u.userId,
-    username: u.username,
-    gold: u.gold,
-    goldCapacity: u.goldCapacity,
-    magicStones: u.magicStones,
-    materials: Object.fromEntries(u.materials),
-    materialCapacity: u.materialCapacity,
-    buildings: u.buildings,
-    cooldowns: u.cooldowns,
-    statistics: u.statistics,
-    unlockedZones: u.unlockedZones,
-    worldBoss: u.worldBoss,
+    userId: user.userId,
+    username: user.username,
+    gold: user.gold,
+    goldCapacity: user.goldCapacity,
+    magicStones: user.magicStones,
+    materials: Object.fromEntries(user.materials),
+    materialCapacity: user.materialCapacity,
+    buildings: user.buildings,
+    cooldowns: user.cooldowns,
+    statistics: user.statistics,
+    unlockedZones: user.unlockedZones,
+    worldBoss: user.worldBoss,
   });
 }
