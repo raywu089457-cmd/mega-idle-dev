@@ -104,10 +104,11 @@ export default function DebugPanel() {
 
       // Step 2: Call NextAuth signout endpoint directly (not the react helper)
       // This ensures the HTTP-only session cookie is actually cleared
+      const csrfToken = await getCsrfToken() ?? "";
       await fetch("/api/auth/signout", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({ csrfToken: await getCsrfToken() }),
+        body: new URLSearchParams({ csrfToken }),
       });
 
       // Step 3: Clear all NextAuth cookies manually for good measure
