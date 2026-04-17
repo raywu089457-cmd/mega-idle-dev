@@ -68,13 +68,16 @@ async function processExploration(user) {
   const subZoneData = zoneData.sub_zones.find(sz => sz.id === exploringHeroes[0].currentSubZone);
   if (!subZoneData) return;
 
-  // Check dispatch cooldown (3 seconds for testing)
-  const dispatchCooldown = user.cooldowns?.dispatch;
-  if (dispatchCooldown) {
-    const cooldownElapsed = Date.now() - new Date(dispatchCooldown).getTime();
-    if (cooldownElapsed < 3000) {
-      console.log(`[exploration] Cooldown active, skipping. elapsed:${cooldownElapsed}ms`);
-      return;
+  // Check dispatch cooldown only for NEW combat starts (3 seconds for testing)
+  // Skip this check if we already have an explorationState (continuing combat)
+  if (!user.explorationState) {
+    const dispatchCooldown = user.cooldowns?.dispatch;
+    if (dispatchCooldown) {
+      const cooldownElapsed = Date.now() - new Date(dispatchCooldown).getTime();
+      if (cooldownElapsed < 3000) {
+        console.log(`[exploration] Cooldown active for new combat, skipping. elapsed:${cooldownElapsed}ms`);
+        return;
+      }
     }
   }
 
@@ -118,6 +121,7 @@ async function processExploration(user) {
   // Continue existing exploration combat - execute ONE round
   const state = user.explorationState;
   state.round++;
+  console.log(`[exploration] Continuing round ${state.round} - enemyHP:${state.enemyCurrentHp}/${state.enemyMaxHp} heroes:${state.heroes.filter(h=>h.currentHp>0).length} alive`);
 
   // Execute one round of combat
   const roundLog = [`第${state.round}回合`];
