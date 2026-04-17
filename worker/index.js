@@ -64,24 +64,37 @@ async function broadcast(userId, userData) {
 async function processExploration(user) {
   const exploringHeroes = user.heroes.roster.filter(h => h.isExploring);
 
+  console.log(`[worker] Found ${exploringHeroes.length} exploring heroes`);
+
   if (exploringHeroes.length === 0) return;
 
   // Get zone data
   const zoneData = subZones[exploringHeroes[0].currentZone];
-  if (!zoneData) return;
+  if (!zoneData) {
+    console.log(`[worker] No zone data for zone ${exploringHeroes[0].currentZone}`);
+    return;
+  }
 
   const subZoneData = zoneData.sub_zones.find(sz => sz.id === exploringHeroes[0].currentSubZone);
-  if (!subZoneData) return;
+  if (!subZoneData) {
+    console.log(`[worker] No subzone data for subzone ${exploringHeroes[0].currentSubZone}`);
+    return;
+  }
 
   // Check if dispatch cooldown has passed (30 seconds)
   const dispatchCooldown = user.cooldowns?.dispatch;
+  console.log(`[worker] Dispatch cooldown check: ${dispatchCooldown ? new Date(dispatchCooldown).toISOString() : 'none'}`);
   if (dispatchCooldown) {
     const cooldownElapsed = Date.now() - new Date(dispatchCooldown).getTime();
+    console.log(`[worker] Cooldown elapsed: ${cooldownElapsed}ms (need 30000ms)`);
     if (cooldownElapsed < 30000) {
       // Still in cooldown - don't process, heroes stay exploring
+      console.log(`[worker] Cooldown active, skipping`);
       return;
     }
   }
+
+  console.log(`[worker] Running combat for ${exploringHeroes.length} heroes in zone ${exploringHeroes[0].currentZone}/${exploringHeroes[0].currentSubZone}`);
 
   // Run combat
   const resolver = new CombatResolver();
@@ -174,6 +187,7 @@ async function processExploration(user) {
     xpGained: result.xpGained,
     logMessages: result.logMessages,
   });
+  console.log(`[worker] Battle log added, victory: ${result.victory}, gold: ${result.goldReward}`);
 
   // Unlock next zone if boss was defeated
   if (result.victory && subZoneData.is_boss && user.unlockedZones) {
