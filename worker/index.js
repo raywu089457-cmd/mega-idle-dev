@@ -53,6 +53,7 @@ async function processExploration(user) {
   console.log(`[exploration] user:${user.userId} exploring:${exploringHeroes.length} state:${user.explorationState ? "has_state" : "no_state"}`);
 
   if (exploringHeroes.length === 0) {
+    console.log(`[exploration] No exploring heroes for user ${user.userId}, clearing state if exists`);
     // Clear exploration state if no heroes exploring
     if (user.explorationState) {
       user.explorationState = null;
@@ -63,10 +64,16 @@ async function processExploration(user) {
 
   // Get zone data
   const zoneData = subZones[exploringHeroes[0].currentZone];
-  if (!zoneData) return;
+  if (!zoneData) {
+    console.log(`[exploration] Invalid zone ${exploringHeroes[0].currentZone} for hero ${exploringHeroes[0].name}`);
+    return;
+  }
 
   const subZoneData = zoneData.sub_zones.find(sz => sz.id === exploringHeroes[0].currentSubZone);
-  if (!subZoneData) return;
+  if (!subZoneData) {
+    console.log(`[exploration] Invalid subZone ${exploringHeroes[0].currentSubZone} in zone ${exploringHeroes[0].currentZone}`);
+    return;
+  }
 
   // Check dispatch cooldown only for NEW combat starts (3 seconds for testing)
   // Skip this check if we already have an explorationState (continuing combat)
