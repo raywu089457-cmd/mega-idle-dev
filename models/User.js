@@ -712,7 +712,7 @@ userSchema.statics.register = async function({ email, password, username }) {
   if (existing) {
     throw new Error("這個電子郵件已經被註冊過了");
   }
-  const bcrypt = require("bcrypt");
+  const bcrypt = require("bcryptjs");
   const passwordHash = await bcrypt.hash(password, 12);
   const userId = `email_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   const user = new this({
@@ -732,7 +732,7 @@ userSchema.statics.register = async function({ email, password, username }) {
 };
 
 userSchema.methods.verifyPassword = async function(password) {
-  const bcrypt = require("bcrypt");
+  const bcrypt = require("bcryptjs");
   return bcrypt.compare(password, this.passwordHash);
 };
 
