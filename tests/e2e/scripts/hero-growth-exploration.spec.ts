@@ -1,4 +1,5 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, Browser, Page } from "@playwright/test";
+import { getAuthenticatedPage } from "./helpers/auth";
 
 const BASE_URL = "https://mega-idle-dev.onrender.com";
 
@@ -8,21 +9,10 @@ const BASE_URL = "https://mega-idle-dev.onrender.com";
  * - Target: Level 30 heroes
  * - Duration: Up to 12 hours
  */
-test("Hero Growth Through Exploration - Level heroes to 30 via combat only", async ({ page }) => {
+test("Hero Growth Through Exploration - Level heroes to 30 via combat only", async ({ browser }) => {
   test.setTimeout(43200000); // 12 hours
 
-  // Login
-  await page.goto(`${BASE_URL}/game`, { waitUntil: "networkidle" });
-  await page.waitForTimeout(3000);
-
-  const url = page.url();
-  if (url.includes("auth") || url === BASE_URL + "/") {
-    await page.goto(`${BASE_URL}/`);
-    await page.waitForTimeout(1000);
-    await page.locator(".discord-btn").click();
-    await page.waitForURL(`${BASE_URL}/game`, { timeout: 30000 });
-    await page.waitForTimeout(2000);
-  }
+  const page = await getAuthenticatedPage(browser, BASE_URL);
 
   console.log("\n=== Hero Growth Through Exploration ===");
   console.log("Rules: NO training - XP only from combat");
@@ -30,7 +20,6 @@ test("Hero Growth Through Exploration - Level heroes to 30 via combat only", asy
 
   const TARGET_LEVEL = 30;
   const ZONE_TIMEOUT = 45000; // 45 seconds per exploration cycle
-  const CHECK_INTERVAL_MS = 60000; // Check level every minute
 
   // Initial status
   await page.locator(".game-nav").getByText(/英雄/).click();
@@ -41,7 +30,7 @@ test("Hero Growth Through Exploration - Level heroes to 30 via combat only", asy
   await page.waitForTimeout(500);
 
   const heroRows = await page.locator(".hero-row").all();
-  const maxInitialLevel = await getMaxHeroLevel(page, heroRows);
+  const maxInitialLevel = await getMaxHeroLevel(heroRows);
   console.log(`[START] Territory heroes: ${heroRows.length}`);
   console.log(`[START] Highest level: ${maxInitialLevel}`);
 
@@ -82,18 +71,15 @@ test("Hero Growth Through Exploration - Level heroes to 30 via combat only", asy
     await page.waitForTimeout(300);
 
     // Determine best zone based on current level
-    // Use zones 1-10, higher zones = higher XP
-    const zoneSelect = page.locator("select").first();
-    const diffSelect = page.locator("select").nth(1);
-
-    // Auto-select zone based on hero level
     let targetZone = Math.min(10, Math.floor(currentMaxLevel / 3) + 1);
     if (targetZone < 1) targetZone = 1;
 
+    const zoneSelect = page.locator("select").first();
     await zoneSelect.selectOption(String(targetZone));
     await page.waitForTimeout(200);
 
     // Select hardest difficulty
+    const diffSelect = page.locator("select").nth(1);
     const diffOptions = await diffSelect.locator("option").all();
     const maxDiff = diffOptions.length;
     await diffSelect.selectOption(String(maxDiff));
@@ -111,14 +97,8 @@ test("Hero Growth Through Exploration - Level heroes to 30 via combat only", asy
         console.log("[WARN] Hero recalled");
         await page.waitForTimeout(2000);
       }
-      // Try dispatch again
-      const retryDispatchBtn = page.locator("button").filter({ hasText: /派遣/i }).first();
-      if (await retryDispatchBtn.count() > 0 && !(await retryDispatchBtn.isDisabled().catch(() => true))) {
-        console.log("[WARN] Retrying dispatch after recall");
-      } else {
-        await page.waitForTimeout(5000);
-        continue;
-      }
+      await page.waitForTimeout(5000);
+      continue;
     }
 
     // Dispatch hero
@@ -150,7 +130,7 @@ test("Hero Growth Through Exploration - Level heroes to 30 via combat only", asy
     await page.waitForTimeout(500);
 
     const updatedHeroRows = await page.locator(".hero-row").all();
-    const newMaxLevel = await getMaxHeroLevel(page, updatedHeroRows);
+    const newMaxLevel = await getMaxHeroLevel(updatedHeroRows);
 
     if (newMaxLevel > currentMaxLevel) {
       console.log(`\n*** LEVEL UP! ${currentMaxLevel} -> ${newMaxLevel} ***\n`);
@@ -179,7 +159,7 @@ test("Hero Growth Through Exploration - Level heroes to 30 via combat only", asy
 /**
  * Helper: Get max level from hero rows
  */
-async function getMaxHeroLevel(page: any, heroRows: any[]): Promise<number> {
+async function getMaxHeroLevel(heroRows: any[]): Promise<number> {
   let maxLevel = 0;
   for (const row of heroRows) {
     const levelText = await row.locator(".hero-lv").textContent().catch(() => "Lv.0");

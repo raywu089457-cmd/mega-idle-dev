@@ -1,22 +1,12 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, Browser } from "@playwright/test";
+import { getAuthenticatedPage } from "./helpers/auth";
 
 const BASE_URL = "https://mega-idle-dev.onrender.com";
 
-test("Exploration Battle Test - Dispatch and wait for battle result", async ({ page }) => {
+test("Exploration Battle Test - Dispatch and wait for battle result", async ({ browser }) => {
   test.setTimeout(120000);
 
-  // Login
-  await page.goto(`${BASE_URL}/game`, { waitUntil: "networkidle" });
-  await page.waitForTimeout(3000);
-
-  const url = page.url();
-  if (url.includes("auth") || url === BASE_URL + "/") {
-    await page.goto(`${BASE_URL}/`);
-    await page.waitForTimeout(1000);
-    await page.locator(".discord-btn").click();
-    await page.waitForURL(`${BASE_URL}/game`, { timeout: 30000 });
-    await page.waitForTimeout(2000);
-  }
+  const page = await getAuthenticatedPage(browser, BASE_URL);
 
   console.log("1. Going to Heroes panel to check heroes...");
   await page.locator(".game-nav").getByText(/英雄/).click();
@@ -69,6 +59,14 @@ test("Exploration Battle Test - Dispatch and wait for battle result", async ({ p
         console.log("3. Waiting 35 seconds for exploration battle...");
         await page.waitForTimeout(35000);
 
+        // Recall hero
+        const recallBtn = page.locator("button").filter({ hasText: /召回/i }).first();
+        if (await recallBtn.count() > 0) {
+          await recallBtn.click();
+          await page.waitForTimeout(2000);
+          console.log("   Hero recalled");
+        }
+
         // Check home panel stats
         console.log("4. Checking stats on Home panel...");
         await page.locator(".game-nav").getByText(/首頁/).click();
@@ -94,4 +92,5 @@ test("Exploration Battle Test - Dispatch and wait for battle result", async ({ p
   }
 
   console.log("6. Test complete!");
+  await page.close();
 });
