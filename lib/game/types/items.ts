@@ -9,7 +9,7 @@ type RawItemEntry = {
   isLegendary?: boolean;
 };
 
-const ITEMS: Record<string, RawItemEntry> = require("../../_CONSTS/items");
+const ITEMS: Record<string, RawItemEntry> = require("../_CONSTS/items");
 
 export { ITEMS };
 export type { RawItemEntry as ItemEntry };
