@@ -510,7 +510,7 @@ test.describe("Full Gameplay Journey", () => {
     await navigateToTab(page, "戰報");
     await page.waitForTimeout(1000);
 
-    const logEntries = await page.locator(".log-entry").count();
+    const logEntries = await page.locator(".log-row").count();
     console.log(`  [INFO] Battle log entries: ${logEntries}`);
 
     // 4.7 Try progression through zones 2-5 (medium difficulty)
