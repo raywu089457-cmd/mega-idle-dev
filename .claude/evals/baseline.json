@@ -1,0 +1,35 @@
+{
+  "timestamp": "2026-04-17T11:20:50.172Z",
+  "project": "mega-idle-dev",
+  "layers": {
+    "unit": {
+      "passed": 87,
+      "failed": 0,
+      "total": 87,
+      "suites": 21,
+      "failedSuites": 0,
+      "passAt1": 1,
+      "target": "pass^3 = 1.00"
+    },
+    "api": {
+      "passed": 22,
+      "failed": 0,
+      "skipped": 0,
+      "total": 22,
+      "passAt1": 1,
+      "target": "pass@3 >= 0.90"
+    },
+    "e2e": {
+      "passed": 0,
+      "failed": 0,
+      "total": 0,
+      "passAt1": null,
+      "target": "pass@3 >= 0.85"
+    }
+  },
+  "overall": {
+    "status": "PASS",
+    "totalPassed": 109,
+    "totalFailed": 0
+  }
+}

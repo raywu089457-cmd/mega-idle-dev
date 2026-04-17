@@ -22,7 +22,8 @@ export class UserRepository {
    * Find user by userId, excluding soft-deleted users
    */
   static async findByIdActive(userId: string): Promise<UserDoc> {
-    return User.findOne({ userId, deletedAt: { $exists: false } });
+    // Must use $eq:null not $exists:false — Mongoose default null means field exists with null value
+    return User.findOne({ userId, deletedAt: { $eq: null } });
   }
 
   /**

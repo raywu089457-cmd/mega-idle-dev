@@ -1,0 +1,5 @@
+
+> mega-idle@1.0.0 dev
+> nodemon index.js
+
+'nodemon' 不是內部或外部命令、可執行的程式或批次檔。

@@ -1,5 +1,4 @@
 import { AuthOptions } from "next-auth";
-import DiscordProvider from "next-auth/providers/discord";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { DefaultSession } from "next-auth";
 import { connectDB } from "@/lib/db";
@@ -16,10 +15,6 @@ declare module "next-auth" {
 
 export const authOptions: AuthOptions = {
   providers: [
-    DiscordProvider({
-      clientId: process.env.DISCORD_CLIENT_ID!,
-      clientSecret: process.env.DISCORD_CLIENT_SECRET!,
-    }),
     CredentialsProvider({
       name: "Email",
       credentials: {

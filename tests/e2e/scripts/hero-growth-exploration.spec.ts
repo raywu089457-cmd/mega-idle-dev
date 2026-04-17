@@ -1,5 +1,5 @@
 import { test, expect, Browser, Page } from "@playwright/test";
-import { getAuthenticatedPage } from "./helpers/auth";
+import { getAuthenticatedPage } from "../helpers/auth-session";
 
 const BASE_URL = "https://mega-idle-dev.onrender.com";
 

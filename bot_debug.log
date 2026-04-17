@@ -1,0 +1,25 @@
+[Bot] PID lock acquired: 12220
+Connected to MongoDB
+Logged in as AItestingbot#9366 (ID: 1489251920563408927)
+(node:12220) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Registered 24 slash commands
+[IdleLoop] Starting idle loop service...
+[IdleLoop] Idle loop service started
+[Bot] Idle loop service started
+[DEBUG] messageCreate received: "!test:heroes list" from Corde test 2#3883 (bot: true)
+[Test] Received test command: heroes list
+[DEBUG] editReply called with channel id: 1489772319256612864 type: function
+[DEBUG] messageCreate received: "!test:heroes recruit" from Corde test 2#3883 (bot: true)
+[Test] Received test command: heroes recruit
+[DEBUG] editReply called with channel id: 1489772319256612864 type: function
+[DEBUG] editReply sent message id: 1493179464807354509
+[DEBUG] messageCreate received: "!test:heroes status" from Corde test 2#3883 (bot: true)
+[Test] Received test command: heroes status
+[DEBUG] editReply called with channel id: 1489772319256612864 type: function
+[DEBUG] editReply sent message id: 1493179487096143883
+[DEBUG] editReply sent message id: 1493179494469472296
+[DEBUG] messageCreate received: "!test:profile" from Corde test 2#3883 (bot: true)
+[Test] Received test command: profile 
+[DEBUG] editReply called with channel id: 1489772319256612864 type: function
+[DEBUG] editReply sent message id: 1493179514791006288

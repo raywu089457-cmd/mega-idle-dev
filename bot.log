@@ -1,0 +1,9 @@
+[Bot] PID lock acquired: 37700
+Connected to MongoDB
+Logged in as 開發版#5795 (ID: 1489768828685783130)
+(node:37700) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Registered 24 slash commands
+[IdleLoop] Starting idle loop service...
+[IdleLoop] Idle loop service started
+[Bot] Idle loop service started

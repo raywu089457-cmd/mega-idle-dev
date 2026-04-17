@@ -195,6 +195,11 @@ deletedDiscordUserIds.add(userId);
 □ 新物品或新英雄類型？
   → 在 lib/game/_CONSTS/ 新增 runtime 常數
   → 同步更新 lib/types/index.ts 的 interface
+
+□ 新增 API route（功能開發中）？
+  → 在 lib/config/features.ts 新增 flag，預設 false
+  → route handler 第一行加 requireFeature() guard
+  → 功能完成後改為 true
 ```
 
 ---
@@ -205,6 +210,8 @@ deletedDiscordUserIds.add(userId);
 lib/
 ├── types/index.ts              ← Domain types 單一真相
 ├── validation/schemas.ts       ← Zod validation schemas
+├── config/
+│   └── features.ts             ← Feature Flags 功能開關
 ├── repositories/
 │   └── UserRepository.ts       ← User 資料存取唯一途徑
 ├── db/
@@ -238,3 +245,32 @@ new Set() 做 user deletion tracking
 ```
 
 遇到上述任何一種 → 停下來，先問：「這個邏輯應該在哪裡？」
+
+---
+
+## 11. Feature Flags（功能開關）
+
+**位置：** `lib/config/features.ts`
+
+```typescript
+import { requireFeature } from "@/lib/config/features";
+
+// ✅ 正確：所有 API route handler 第一行
+export async function POST(request: Request) {
+  const blocked = requireFeature("army");
+  if (blocked) return blocked;   // 關閉時直接回傳 403，不執行業務邏輯
+  // ...
+}
+```
+
+**規則：**
+- 新功能開發中 → `false`，上線後改 `true`
+- 每個 API route 的每個 handler（GET/POST/...）都要加 guard
+- Flag 只在 `lib/config/features.ts` 定義，不在其他地方重複判斷
+- 禁止用環境變數或 magic string 做功能開關，統一走此檔案
+
+| 目前狀態 | Flag |
+|----------|------|
+| ✅ on（核心） | heroes, dispatch, build, inventory, rewards, profile |
+| ✅ on（進階） | team, guild, worldBoss, logs, zones, events |
+| ❌ off（開發中） | army, crafting |

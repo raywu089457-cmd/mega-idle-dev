@@ -1,0 +1,18 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"const {execSync}=require('child_process');let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{const j=JSON.parse(d);const f=j.tool_input?.file_path||'';if(!/(lib.game|tests.unit)/i.test(f))process.exit(0);try{execSync('npm run test:unit',{cwd:'C:/Users/ray/.openclaw/game-studios/projects/mega-idle-dev',timeout:30000,stdio:'pipe'});process.exit(0);}catch(e){const out=(e.stdout||'').toString();const sum=out.split('\\\\n').filter(l=>/Tests |failed|passed/.test(l)).slice(-2).join(' ');process.stdout.write(JSON.stringify({systemMessage:'\\u26a0\\ufe0f Unit tests FAILED after editing: '+f+'\\n'+sum}));process.exit(2);}}catch(e){process.exit(0);}});\"",
+            "asyncRewake": true,
+            "timeout": 35,
+            "statusMessage": "Running unit tests..."
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -4,6 +4,7 @@ import { connectDB } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
 import { UserRepository } from "@/lib/repositories/UserRepository";
 import { ITEMS } from "@/lib/game/types/items";
+import { requireFeature } from "@/lib/config/features";
 
 async function getUser() {
   const session = await getServerSession(authOptions);
@@ -18,6 +19,9 @@ const BASE_COSTS: Record<string, Record<string, number>> = {
 };
 
 export async function GET() {
+  const blocked = requireFeature("army");
+  if (blocked) return blocked;
+
   try {
     const user = await getUser();
     if (!user) {
@@ -47,6 +51,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const blocked = requireFeature("army");
+  if (blocked) return blocked;
+
   try {
     const user = await getUser();
     if (!user) {

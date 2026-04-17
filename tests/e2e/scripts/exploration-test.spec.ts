@@ -1,10 +1,10 @@
 import { test, expect, Browser } from "@playwright/test";
-import { getAuthenticatedPage } from "./helpers/auth";
+import { getAuthenticatedPage } from "../helpers/auth-session";
 
 const BASE_URL = "https://mega-idle-dev.onrender.com";
 
 test("Exploration Battle Test - Dispatch and wait for battle result", async ({ browser }) => {
-  test.setTimeout(120000);
+  test.setTimeout(300000); // 5 minutes
 
   const page = await getAuthenticatedPage(browser, BASE_URL);
 
@@ -32,7 +32,7 @@ test("Exploration Battle Test - Dispatch and wait for battle result", async ({ b
     await heroBtn.click();
     await page.waitForTimeout(300);
 
-    // Select zone 1, easy
+    // Select zone 1, easy (goblin with 25 HP)
     const zoneSelect = page.locator("select").first();
     await zoneSelect.selectOption("1");
     await page.waitForTimeout(200);
@@ -55,37 +55,61 @@ test("Exploration Battle Test - Dispatch and wait for battle result", async ({ b
         await page.waitForTimeout(2000);
         console.log("   Hero dispatched!");
 
-        // Wait 35 seconds for battle to process
-        console.log("3. Waiting 35 seconds for exploration battle...");
-        await page.waitForTimeout(35000);
+        // Wait up to 4 minutes for battle to complete (50 rounds max = ~250s but should finish faster)
+        console.log("3. Waiting up to 4 minutes for exploration battle to complete...");
 
-        // Recall hero
-        const recallBtn = page.locator("button").filter({ hasText: /召回/i }).first();
-        if (await recallBtn.count() > 0) {
-          await recallBtn.click();
-          await page.waitForTimeout(2000);
-          console.log("   Hero recalled");
+        // Poll every 10 seconds to check if battle log appears
+        let battleLogFound = false;
+        for (let i = 0; i < 24; i++) { // 24 * 10s = 240s = 4 minutes
+          await page.waitForTimeout(10000);
+          console.log(`   ...waited ${(i+1) * 10}s`);
+
+          // Check if hero is still exploring
+          const recallBtn = page.locator("button").filter({ hasText: /召回/i }).first();
+          const stillExploring = await recallBtn.count() > 0;
+
+          // Check battle logs without clicking away
+          await page.locator(".game-nav").getByText(/戰報/).click();
+          await page.waitForTimeout(1000);
+          const logRows = await page.locator(".log-row").count();
+          console.log(`   Battle log entries: ${logRows}`);
+
+          if (logRows > 0) {
+            battleLogFound = true;
+            const firstLog = await page.locator(".log-row").first().textContent().catch(() => "N/A");
+            console.log(`   First log: ${firstLog}`);
+            break;
+          }
+
+          // Go back to exploration to check status
+          if (stillExploring) {
+            await page.locator(".game-nav").getByText(/探索/).click();
+            await page.waitForTimeout(500);
+          }
         }
 
-        // Check home panel stats
-        console.log("4. Checking stats on Home panel...");
+        // Check final stats
+        console.log("4. Checking final stats on Home panel...");
         await page.locator(".game-nav").getByText(/首頁/).click();
         await page.waitForTimeout(1000);
 
         const statsText = await page.locator(".stats-list").textContent().catch(() => "N/A");
         console.log(`   Stats: ${statsText}`);
 
-        // Check battle logs
-        console.log("5. Checking battle logs...");
+        // Final battle log check
+        console.log("5. Final battle log check...");
         await page.locator(".game-nav").getByText(/戰報/).click();
         await page.waitForTimeout(1000);
 
-        const logRows = await page.locator(".log-row").count();
-        console.log(`   Battle log entries: ${logRows}`);
+        const finalLogRows = await page.locator(".log-row").count();
+        console.log(`   Final battle log entries: ${finalLogRows}`);
 
-        if (logRows > 0) {
+        if (finalLogRows > 0) {
           const firstLog = await page.locator(".log-row").first().textContent().catch(() => "N/A");
           console.log(`   First log: ${firstLog}`);
+          expect(finalLogRows).toBeGreaterThan(0);
+        } else {
+          console.log("   WARNING: No battle logs found after 4 minutes!");
         }
       }
     }

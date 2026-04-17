@@ -4,6 +4,7 @@ import { connectDB } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
 import { UserRepository } from "@/lib/repositories/UserRepository";
 import { ITEMS } from "@/lib/game/types/items";
+import { requireFeature } from "@/lib/config/features";
 
 async function getUser() {
   const session = await getServerSession(authOptions);
@@ -13,6 +14,9 @@ async function getUser() {
 }
 
 export async function POST(request: Request) {
+  const blocked = requireFeature("crafting");
+  if (blocked) return blocked;
+
   try {
     const user = await getUser();
     if (!user) {
