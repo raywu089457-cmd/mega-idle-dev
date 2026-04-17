@@ -7,7 +7,9 @@ export async function middleware(req: NextRequest) {
     req,
     secret: process.env.NEXTAUTH_SECRET,
   });
+  console.log("[middleware] token:", token ? { sub: token.sub, email: token.email } : null);
   if (!token) {
+    console.log("[middleware] No token, redirect to /");
     const url = req.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);
