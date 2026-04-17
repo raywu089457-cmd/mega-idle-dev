@@ -68,16 +68,24 @@ async function processExploration(user) {
     return;
   }
 
-  // Get zone data
-  const zoneData = subZones[exploringHeroes[0].currentZone];
-  if (!zoneData) {
-    console.log(`[exploration] Invalid zone ${exploringHeroes[0].currentZone} for hero ${exploringHeroes[0].name}`);
+  // Get zone data from hero's current zone
+  const heroZone = exploringHeroes[0].currentZone;
+  const heroSubZone = exploringHeroes[0].currentSubZone;
+  const heroName = exploringHeroes[0].name;
+
+  console.log(`[exploration] Hero ${heroName}: zone=${heroZone} subZone=${heroSubZone}`);
+  console.log(`[exploration] subZones keys: ${Object.keys(subZones).join(",")}`);
+  console.log(`[exploration] subZones[${heroZone}]: ${subZones[heroZone] ? "exists" : "UNDEFINED"}`);
+
+  if (!subZones[heroZone]) {
+    console.log(`[exploration] FATAL: subZones[${heroZone}] is undefined! State zone=${user.explorationState?.zone}`);
     return;
   }
 
-  const subZoneData = zoneData.sub_zones.find(sz => sz.id === exploringHeroes[0].currentSubZone);
+  const zoneData = subZones[heroZone];
+  const subZoneData = zoneData.sub_zones.find(sz => sz.id === heroSubZone);
   if (!subZoneData) {
-    console.log(`[exploration] Invalid subZone ${exploringHeroes[0].currentSubZone} in zone ${exploringHeroes[0].currentZone}`);
+    console.log(`[exploration] Invalid subZone ${heroSubZone} in zone ${heroZone}`);
     return;
   }
 
@@ -102,8 +110,8 @@ async function processExploration(user) {
 
     // Initialize combat state
     user.explorationState = {
-      zone: exploringHeroes[0].currentZone,
-      subZone: exploringHeroes[0].currentSubZone,
+      zone: heroZone,
+      subZone: heroSubZone,
       enemyName: primaryMonster.name,
       enemyCurrentHp: primaryMonster.hp,
       enemyMaxHp: primaryMonster.hp,
@@ -127,7 +135,7 @@ async function processExploration(user) {
 
     user.markModified('explorationState');
     user.cooldowns.dispatch = new Date();
-    console.log(`[exploration] New combat started - zone:${exploringHeroes[0].currentZone} subZone:${exploringHeroes[0].currentSubZone} enemy:${primaryMonster.name} HP:${primaryMonster.hp}`);
+    console.log(`[exploration] New combat started - zone:${heroZone} subZone:${heroSubZone} enemy:${primaryMonster.name} HP:${primaryMonster.hp}`);
     await user.save();
     return; // First tick just sets up state, no combat round yet
   }
