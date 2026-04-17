@@ -85,7 +85,7 @@ export async function POST(request: Request) {
         const num = Math.min(10, Math.max(1, parseInt(params.count) || 1));
         const spawned: string[] = [];
         for (let i = 0; i < num; i++) {
-          const hero = HeroManagementService.createWanderingHero(user);
+          const hero = HeroManagementService.createWanderingHero(user) as { name: string } | null;
           if (hero) {
             spawned.push(hero.name);
           }
