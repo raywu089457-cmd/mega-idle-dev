@@ -59,6 +59,12 @@ export async function POST(request: Request) {
       if (!hero) {
         return NextResponse.json({ success: false, error: "英雄不存在" }, { status: 404 });
       }
+      if (hero.type !== "territory") {
+        return NextResponse.json({ success: false, error: "只能裝備領地英雄" }, { status: 400 });
+      }
+      if (hero.isExploring) {
+        return NextResponse.json({ success: false, error: "探索中的英雄無法裝備" }, { status: 400 });
+      }
 
       const item = ITEMS_TYPED[itemId as string];
       if (!item) {
