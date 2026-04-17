@@ -57,6 +57,7 @@ async function processExploration(user) {
     // Clear exploration state if no heroes exploring
     if (user.explorationState) {
       user.explorationState = null;
+      user.markModified('explorationState');
       await user.save();
     }
     return;
@@ -119,6 +120,7 @@ async function processExploration(user) {
       xpReward: Math.floor(primaryMonster.xp * subZoneData.xp_multiplier),
     };
 
+    user.markModified('explorationState');
     user.cooldowns.dispatch = new Date();
     console.log(`[exploration] New combat started - zone:${exploringHeroes[0].currentZone} subZone:${exploringHeroes[0].currentSubZone} enemy:${primaryMonster.name} HP:${primaryMonster.hp}`);
     await user.save();
@@ -128,6 +130,7 @@ async function processExploration(user) {
   // Continue existing exploration combat - execute ONE round
   const state = user.explorationState;
   state.round++;
+  user.markModified('explorationState');
   console.log(`[exploration] Continuing round ${state.round} - enemyHP:${state.enemyCurrentHp}/${state.enemyMaxHp} heroes:${state.heroes.filter(h=>h.currentHp>0).length} alive`);
 
   // Execute one round of combat
@@ -220,6 +223,7 @@ async function processExploration(user) {
 
     // Clear exploration state
     user.explorationState = null;
+    user.markModified('explorationState');
     user.cooldowns.dispatch = new Date();
   }
 
