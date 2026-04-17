@@ -48,10 +48,6 @@ export const authOptions: AuthOptions = {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async session({ session, token }: any) {
       if (session?.user && token?.sub) {
-        // Check if user was soft-deleted — invalidate session if so
-        await connectDB();
-        const user = await UserRepository.findById(token.sub);
-        if (user?.deletedAt) return { ...session, user: { ...session.user, id: token.sub } };
         session.user.id = token.sub;
       }
       return session;
@@ -62,12 +58,13 @@ export const authOptions: AuthOptions = {
         token.accessToken = account.access_token;
         return token;
       }
-      // Session restoration from cookie — check if this user was soft-deleted.
-      // If so, return null to force re-auth and prevent silent account recreation.
+      // Session restoration — only invalidate token if user was explicitly soft-deleted.
+      // Do NOT return null if user doesn't exist yet (allows Discord OAuth first-time flow).
       if (token.sub) {
         await connectDB();
         const user = await UserRepository.findById(token.sub);
-        if (user?.deletedAt) return null;
+        // Only destroy token if user exists AND is soft-deleted
+        if (user && user.deletedAt) return null;
       }
       return token;
     },
