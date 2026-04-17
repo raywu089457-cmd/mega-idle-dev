@@ -29,12 +29,15 @@ export default function GamePage() {
   const [tab, setTab] = useState<Tab>("home");
 
   useEffect(() => {
-    if (status === "unauthenticated") redirect("/");
     if (status === "authenticated") fetchUser();
   }, [status, fetchUser]);
 
   if (status === "loading" || loading) {
     return <div className="full-loading"><div className="spinner" /><p>載入中...</p></div>;
+  }
+
+  if (status === "unauthenticated") {
+    redirect("/");
   }
 
   if (error || !data) {
