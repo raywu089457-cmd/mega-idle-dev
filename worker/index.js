@@ -1,206 +1,165 @@
 /**
- * Phase 5 Background Worker
- * Runs idle tick processing for all users every 5 seconds.
- * Handles:
- * - Monument, tavern, potion shop production
- * - Exploration battles for dispatched heroes
- * - Wandering hero spawning
- * - Broadcast updates to connected clients
- */
-
-const mongoose = require("mongoose");
-const axios = require("axios");
-const User = require("../models/User");
-const { HeroManagementService } = require("../lib/game/services/HeroManagementService");
-const { CombatResolver } = require("../lib/game/combat/CombatResolver");
-const subZones = require("../lib/game/_UNIVERSE/sub-zones");
-
-const TICK_INTERVAL_MS = 5000;
-const WANDERING_SPAWN_CHANCE = 0.30;
-const EXPLORATION_DURATION_MS = 30000; // 30 seconds per exploration
-
-async function connectDB() {
-  const MONGODB_URI = process.env.MONGODB_URI;
-  if (!MONGODB_URI) {
-    throw new Error("MONGODB_URI environment variable is not set");
-  }
-
-  if (mongoose.connection.readyState === 0) {
-    await mongoose.connect(MONGODB_URI, { bufferCommands: false });
-  }
-  return mongoose.connection;
-}
-
-async function broadcast(userId, userData) {
-  const NEXTAUTH_URL = process.env.NEXTAUTH_URL;
-  const WORKER_SECRET = process.env.WORKER_SECRET;
-
-  if (!NEXTAUTH_URL || !WORKER_SECRET) {
-    console.error("[broadcast] Missing NEXTAUTH_URL or WORKER_SECRET");
-    return;
-  }
-
-  try {
-    await axios.post(
-      `${NEXTAUTH_URL}/api/internal/broadcast`,
-      { userId, ...userData },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          "X-Worker-Secret": WORKER_SECRET,
-        },
-        timeout: 10000,
-      }
-    );
-  } catch (err) {
-    console.error(`[broadcast] Failed for user ${userId}:`, err.message);
-  }
-}
-
-/**
  * Process exploration battles for a user's dispatched heroes
- * Heroes stay exploring until recalled, but combat runs every tick
+ * TURN-BASED: Execute ONE round per tick, tracking combat state
  */
 async function processExploration(user) {
   const exploringHeroes = user.heroes.roster.filter(h => h.isExploring);
 
-  console.log(`[worker] Found ${exploringHeroes.length} exploring heroes`);
-
-  if (exploringHeroes.length === 0) return;
+  if (exploringHeroes.length === 0) {
+    // Clear exploration state if no heroes exploring
+    if (user.explorationState) {
+      user.explorationState = null;
+      await user.save();
+    }
+    return;
+  }
 
   // Get zone data
   const zoneData = subZones[exploringHeroes[0].currentZone];
-  if (!zoneData) {
-    console.log(`[worker] No zone data for zone ${exploringHeroes[0].currentZone}`);
-    return;
-  }
+  if (!zoneData) return;
 
   const subZoneData = zoneData.sub_zones.find(sz => sz.id === exploringHeroes[0].currentSubZone);
-  if (!subZoneData) {
-    console.log(`[worker] No subzone data for subzone ${exploringHeroes[0].currentSubZone}`);
-    return;
-  }
+  if (!subZoneData) return;
 
-  // Check if dispatch cooldown has passed (30 seconds)
+  // Check dispatch cooldown (3 seconds for testing)
   const dispatchCooldown = user.cooldowns?.dispatch;
-  console.log(`[worker] Dispatch cooldown check: ${dispatchCooldown ? new Date(dispatchCooldown).toISOString() : 'none'}`);
   if (dispatchCooldown) {
     const cooldownElapsed = Date.now() - new Date(dispatchCooldown).getTime();
-    console.log(`[worker] Cooldown elapsed: ${cooldownElapsed}ms (need 30000ms)`);
-    if (cooldownElapsed < 30000) {
-      // Still in cooldown - don't process, heroes stay exploring
-      console.log(`[worker] Cooldown active, skipping`);
-      return;
+    if (cooldownElapsed < 3000) return;
+  }
+
+  // Initialize or continue exploration combat
+  if (!user.explorationState) {
+    // Start NEW exploration combat
+    const monsters = subZoneData.monsters;
+    const primaryMonster = monsters[0];
+
+    // Initialize combat state
+    user.explorationState = {
+      zone: exploringHeroes[0].currentZone,
+      subZone: exploringHeroes[0].currentSubZone,
+      enemyName: primaryMonster.name,
+      enemyCurrentHp: primaryMonster.hp,
+      enemyMaxHp: primaryMonster.hp,
+      enemyAtk: primaryMonster.atk,
+      enemyDef: primaryMonster.defense || 0,
+      isBoss: primaryMonster.is_boss || false,
+      isElite: primaryMonster.is_elite || false,
+      heroes: exploringHeroes.map(h => ({
+        id: h.id,
+        name: h.name,
+        atk: h.atk,
+        def: h.def,
+        currentHp: h.currentHp,
+        maxHp: h.maxHp,
+      })),
+      round: 0,
+      logMessages: [`遭遇 ${primaryMonster.name} (HP:${primaryMonster.hp} ATK:${primaryMonster.atk})`],
+      goldReward: subZoneData.gold_reward,
+      xpReward: Math.floor(primaryMonster.xp * subZoneData.xp_multiplier),
+    };
+
+    user.cooldowns.dispatch = new Date();
+    await user.save();
+    return; // First tick just sets up state, no combat round yet
+  }
+
+  // Continue existing exploration combat - execute ONE round
+  const state = user.explorationState;
+  state.round++;
+
+  // Execute one round of combat
+  const roundLog = [`第${state.round}回合`];
+
+  // Heroes attack first
+  for (const heroState of state.heroes) {
+    if (heroState.currentHp <= 0) continue;
+
+    // Calculate damage
+    const baseDamage = Math.max(1, heroState.atk - state.enemyDef);
+    const isCrit = Math.random() < 0.1; // 10% crit chance
+    const damage = isCrit ? Math.floor(baseDamage * 1.5) : baseDamage;
+
+    state.enemyCurrentHp -= damage;
+    const critText = isCrit ? '暴擊！' : '';
+    roundLog.push(`[${heroState.name}] 攻擊造成 ${damage} 傷害 ${critText}`.trim());
+
+    if (state.enemyCurrentHp <= 0) break; // Enemy died
+  }
+
+  // Enemy counter-attacks if still alive
+  if (state.enemyCurrentHp > 0 && state.heroes.some(h => h.currentHp > 0)) {
+    const aliveHeroes = state.heroes.filter(h => h.currentHp > 0);
+    // Target the hero with lowest HP
+    const target = aliveHeroes.reduce((min, h) => h.currentHp < min.currentHp ? h : min, aliveHeroes[0]);
+
+    const actualDamage = Math.max(1, state.enemyAtk - target.def);
+    target.currentHp -= actualDamage;
+    roundLog.push(`[${state.enemyName}] 攻擊 [${target.name}] 造成 ${actualDamage} 傷害 (HP: ${target.currentHp}/${target.maxHp})`);
+
+    if (target.currentHp <= 0) {
+      roundLog.push(`[${target.name}] 倒下了！`);
     }
   }
 
-  console.log(`[worker] Running combat for ${exploringHeroes.length} heroes in zone ${exploringHeroes[0].currentZone}/${exploringHeroes[0].currentSubZone}`);
+  state.logMessages.push(...roundLog);
 
-  // Run combat
-  const resolver = new CombatResolver();
-  const result = resolver.resolveCombat(exploringHeroes, {
-    monsters: subZoneData.monsters,
-    difficulty: subZoneData.difficulty,
-    gold_reward: subZoneData.gold_reward,
-    stone_drop: subZoneData.stone_drop,
-    xp_multiplier: subZoneData.xp_multiplier,
-    is_boss: subZoneData.is_boss,
-    is_elite: subZoneData.is_elite,
-  }, 0);
+  // Check if combat is over
+  const enemyDefeated = state.enemyCurrentHp <= 0;
+  const heroesDefeated = state.heroes.every(h => h.currentHp <= 0);
+  const maxRoundsReached = state.round >= 50;
 
-  // Apply results to each hero
-  for (const hero of exploringHeroes) {
-    if (result.victory) {
-      // Victory rewards - XP is accumulated
-      const xpGained = Math.floor(result.xpGained / exploringHeroes.length);
-      hero.experience += xpGained;
-      hero.lastZone = hero.currentZone;
-      hero.lastSubZone = hero.currentSubZone;
+  if (enemyDefeated || heroesDefeated || maxRoundsReached) {
+    // Combat finished - apply results
+    const victory = enemyDefeated && !heroesDefeated;
 
-      // Process level ups (handles XP threshold check + stat increases)
-      const levelResult = HeroManagementService.addXp(user, hero.id, 0);
-      if (levelResult?.leveledUp) {
-        console.log(`[worker] Hero ${hero.name} leveled up to ${hero.level}!`);
+    // Apply results to actual heroes
+    for (const hero of exploringHeroes) {
+      const heroState = state.heroes.find(h => h.id === hero.id);
+      if (heroState) {
+        hero.currentHp = Math.max(0, heroState.currentHp);
+        hero.experience += Math.floor(state.xpReward / state.heroes.length);
+        hero.lastZone = hero.currentZone;
+        hero.lastSubZone = hero.currentSubZone;
+
+        // Process level up
+        HeroManagementService.addXp(user, hero.id, 0);
       }
+    }
+
+    // Give rewards
+    if (victory) {
+      user.gold = (user.gold || 0) + state.goldReward;
+      state.logMessages.push(`戰鬥勝利！獲得 ${state.goldReward} 黃金`);
     } else {
-      // Defeat - lose some hunger/thirst, reduced HP (revived at half HP by CombatResolver)
-      hero.hunger = Math.max(0, hero.hunger - 10);
-      hero.thirst = Math.max(0, hero.thirst - 10);
-      // If hero is too hungry/thirsty, they return home
-      if (hero.hunger <= 0 || hero.thirst <= 0) {
-        hero.isExploring = false;
-        hero.currentZone = null;
-        hero.currentSubZone = null;
-        user.removeHeroFromTeam(hero.id);
-        continue;
+      state.logMessages.push(heroesDefeated ? '英雄全滅！' : '戰鬥超时！');
+    }
+
+    // Add battle log
+    user.addBattleLog({
+      category: state.heroes.length > 1 ? "team_combat" : "solo_combat",
+      zone: state.zone,
+      difficulty: state.subZone,
+      heroNames: state.heroes.map(h => h.name),
+      victory,
+      goldReward: victory ? state.goldReward : 0,
+      xpGained: state.xpReward,
+      logMessages: state.logMessages,
+    });
+
+    // Unlock boss zone
+    if (victory && subZoneData.is_boss && user.unlockedZones) {
+      const nextZone = state.zone + 1;
+      if (nextZone <= 10 && !user.unlockedZones.includes(nextZone)) {
+        user.unlockedZones.push(nextZone);
       }
     }
 
-    // Consume rations and water if available
-    if (hero.hunger < 50 && user.materials.get("rations") > 0) {
-      user.materials.set("rations", user.materials.get("rations") - 1);
-      hero.hunger = Math.min(100, hero.hunger + 30);
-    }
-    if (hero.thirst < 50 && user.materials.get("drinking_water") > 0) {
-      user.materials.set("drinking_water", user.materials.get("drinking_water") - 1);
-      hero.thirst = Math.min(100, hero.thirst + 30);
-    }
-
-    // Heroes stay exploring after combat (until recalled or resource depletion)
+    // Clear exploration state
+    user.explorationState = null;
+    user.cooldowns.dispatch = new Date();
   }
 
-  // Give gold reward
-  if (result.goldReward > 0) {
-    user.gold = (user.gold || 0) + result.goldReward;
-  }
-
-  // Magic stone drops
-  if (result.magicStonesFound > 0) {
-    user.magicStones = (user.magicStones || 0) + result.magicStonesFound;
-  }
-
-  // Material drops
-  for (const [mat, amount] of Object.entries(result.materialsFound)) {
-    const current = user.materials.get(mat) || 0;
-    user.materials.set(mat, current + amount);
-  }
-
-  // Update user statistics
-  if (result.victory) {
-    user.statistics.wins = (user.statistics.wins || 0) + 1;
-  } else {
-    user.statistics.losses = (user.statistics.losses || 0) + 1;
-  }
-  user.statistics.explorations = (user.statistics.explorations || 0) + 1;
-  user.statistics.goldEarned = (user.statistics.goldEarned || 0) + result.goldReward;
-
-  // Add battle log
-  user.addBattleLog({
-    category: exploringHeroes.length > 1 ? "team_combat" : "solo_combat",
-    zone: exploringHeroes[0].currentZone,
-    difficulty: exploringHeroes[0].currentSubZone,
-    teamIdx: exploringHeroes[0].currentTeamIdx,
-    heroNames: exploringHeroes.map(h => h.name),
-    victory: result.victory,
-    damageDealt: result.victory ? result.goldReward * 10 : 0,
-    goldReward: result.goldReward,
-    xpGained: result.xpGained,
-    logMessages: result.logMessages,
-  });
-  console.log(`[worker] Battle log added, victory: ${result.victory}, gold: ${result.goldReward}`);
-
-  // Unlock next zone if boss was defeated
-  if (result.victory && subZoneData.is_boss && user.unlockedZones) {
-    const nextZone = exploringHeroes[0].currentZone + 1;
-    if (nextZone <= 10 && !user.unlockedZones.includes(nextZone)) {
-      user.unlockedZones.push(nextZone);
-    }
-  }
-
-  // Reset cooldown after successful exploration cycle
-  user.cooldowns.dispatch = new Date();
-
-  // Persist all changes (XP, level-ups, gold, materials, battle logs)
   await user.save();
 }
 
@@ -261,23 +220,18 @@ async function main() {
   try {
     await connectDB();
     console.log("[worker] Connected to MongoDB");
+
+    // Main worker loop - runs every 5 seconds
+    setInterval(async () => {
+      console.log("[tick] Running worker tick");
+      await processAllUsers();
+    }, 5000);
+
+    console.log("[worker] Worker tick started - processing every 5 seconds");
   } catch (err) {
-    console.error("[worker] Failed to connect to MongoDB:", err.message);
+    console.error("[worker] Failed to start:", err);
     process.exit(1);
   }
-
-  setInterval(async () => {
-    try {
-      await processAllUsers();
-    } catch (err) {
-      console.error("[tick] Tick error:", err.message);
-    }
-  }, TICK_INTERVAL_MS);
-
-  console.log(`[worker] Idle loop running every ${TICK_INTERVAL_MS / 1000}s`);
 }
 
-main().catch((err) => {
-  console.error("[worker] Fatal error:", err.message);
-  process.exit(1);
-});
+main();

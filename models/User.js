@@ -243,6 +243,33 @@ const userSchema = new mongoose.Schema({
   },
 
   // =============================================================================
+  // Exploration Combat State (for turn-based tick processing)
+  // =============================================================================
+  explorationState: {
+    zone: Number,
+    subZone: Number,
+    enemyName: String,
+    enemyCurrentHp: Number,
+    enemyMaxHp: Number,
+    enemyAtk: Number,
+    enemyDef: Number,
+    isBoss: Boolean,
+    isElite: Boolean,
+    heroes: [{
+      id: String,
+      name: String,
+      atk: Number,
+      def: Number,
+      currentHp: Number,
+      maxHp: Number,
+    }],
+    round: Number,
+    logMessages: [String],
+    goldReward: Number,
+    xpReward: Number,
+  },
+
+  // =============================================================================
   // Statistics
   // =============================================================================
   statistics: {
