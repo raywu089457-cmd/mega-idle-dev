@@ -185,6 +185,9 @@ async function processExploration(user) {
 
   // Reset cooldown after successful exploration cycle
   user.cooldowns.dispatch = new Date();
+
+  // Persist all changes (XP, level-ups, gold, materials, battle logs)
+  await user.save();
 }
 
 async function processAllUsers() {
