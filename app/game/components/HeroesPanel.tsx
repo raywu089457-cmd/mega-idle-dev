@@ -233,11 +233,25 @@ export default function HeroesPanel({ data, api }: Props) {
       <div className="hero-list">
         {heroes.map((h: Hero) => {
           const needsAttention = h.hunger < 30 || h.thirst < 30;
+          const isSelected = selectedHero?.id === h.id;
+          // Wandering heroes: click to select for recruitment (unless already selected)
+          // Territory heroes: click to open detail modal
+          const handleClick = () => {
+            if (tab === "wandering") {
+              if (isSelected) {
+                setSelectedHero(null); // deselect
+              } else {
+                setSelectedHero(h);
+              }
+            } else {
+              setSelectedHero(h); // opens detail modal for territory heroes
+            }
+          };
           return (
             <div
               key={h.id}
-              className={`hero-row ${h.isExploring ? "exploring" : ""} ${needsAttention ? "needs-attention" : ""} ${selectedHero?.id === h.id ? "selected" : ""}`}
-              onClick={() => setSelectedHero(h)}
+              className={`hero-row ${h.isExploring ? "exploring" : ""} ${needsAttention ? "needs-attention" : ""} ${isSelected ? "selected" : ""}`}
+              onClick={handleClick}
             >
               <div className="hero-info">
                 <span className="hero-name" style={{ color: RARITY_COLOR[h.rarity || "D"] }}>
@@ -272,13 +286,13 @@ export default function HeroesPanel({ data, api }: Props) {
             招募全部流浪英雄
           </button>
         )}
-        {tab === "wandering" && !selectedHero && wanderingHeroes.length > 0 && (
+        {tab === "wandering" && !selectedHero && wanderingHeroes.length > 0 && territoryCapUsed < territoryCap && (
           <span className="hint">點擊英雄選擇後再點招募</span>
         )}
         {msg && <span className="msg">{msg}</span>}
       </div>
 
-      {selectedHero && (
+      {selectedHero && tab === "territory" && (
         <HeroDetail hero={selectedHero} data={data} api={api} onClose={() => setSelectedHero(null)} />
       )}
     </div>
