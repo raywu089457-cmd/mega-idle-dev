@@ -17,14 +17,13 @@ export async function GET() {
   let user: any = await User.findOne({ userId: session.user.id });
 
   if (!user) {
-    // Auto-create new player on first login
-    user = new User({
-      userId: session.user.id,
-      username: session.user.name || `Player_${session.user.id.slice(-4)}`,
-      lastTick: new Date(),
-    });
-    await user.save();
-    user = await User.findOne({ userId: session.user.id });
+    // User was deleted but Discord OAuth session is still valid server-side.
+    // Do NOT auto-recreate — return 401 so the client shows a re-auth prompt.
+    // The JWT will be invalidated by the next auth refresh attempt.
+    return Response.json(
+      { error: "帳號已刪除，請重新登入", code: "ACCOUNT_DELETED" },
+      { status: 401 }
+    );
   }
 
   // Process offline gains

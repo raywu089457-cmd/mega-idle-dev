@@ -96,7 +96,14 @@ export function useGameData() {
     setError(null);
     try {
       const res = await fetch("/api/user");
-      if (!res.ok) throw new Error("Failed to load");
+      if (!res.ok) {
+        if (res.status === 401) {
+          // Account was deleted — redirect to home to force re-auth
+          window.location.href = "/";
+          return;
+        }
+        throw new Error("Failed to load");
+      }
       const json = await res.json();
       setData(json);
     } catch (e) {

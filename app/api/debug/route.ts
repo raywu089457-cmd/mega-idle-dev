@@ -1,8 +1,7 @@
 import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
-import { signOut } from "next-auth/react";
 import { connectDB } from "@/lib/db";
-import { authOptions } from "@/lib/auth";
+import { authOptions, markUserDeleted } from "@/lib/auth";
 import User from "@/models/User";
 import { HeroManagementService } from "@/lib/game/services/HeroManagementService";
 
@@ -139,11 +138,9 @@ export async function POST(request: Request) {
         break;
       }
       case "deleteAccount": {
-        // 1. Delete MongoDB user document
+        // Mark Discord userId as deleted so JWT callback refuses session restoration
+        markUserDeleted(user.userId);
         await User.deleteOne({ userId: user.userId });
-        // 2. Sign out so JWT is cleared and user can re-register via Discord OAuth
-        //    We pass redirect: false because we want to return JSON, not redirect
-        await signOut({ redirect: false });
         result = { deleted: true, userId: user.userId, needsReLogin: true };
         break;
       }
