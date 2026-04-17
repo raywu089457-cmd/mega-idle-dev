@@ -101,7 +101,7 @@ function getBldName(k: string): string {
   const names: Record<string, string> = {
     castle: "城堡", tavern: "酒館", monument: "紀念碑", warehouse: "倉庫",
     guildHall: "公會大廳", weaponShop: "武器店", armorShop: "盔甲店",
-    potionShop: "藥水店", lumberMill: "伐木場", mine: "礦場", herbGarden: "草藥園", barracks: "兵營", archery: "弓箭塔",
+    potionShop: "藥水店", lumberMill: "伐木場", mine: "礦場", herbGarden: "草藥園", barracks: "兵營",
   };
   return names[k] || k;
 }

@@ -151,7 +151,6 @@ function getBuildingName(k: string): string {
     castle: "城堡", tavern: "酒館", monument: "紀念碑", warehouse: "倉庫",
     guildHall: "公會大廳", weaponShop: "武器店", armorShop: "盔甲店",
     potionShop: "藥水店", lumberMill: "伐木場", mine: "礦場", herbGarden: "草藥園", barracks: "兵營",
-    archery: "弓箭塔",
   };
   return names[k] || k;
 }
@@ -170,7 +169,6 @@ function getBuildingDesc(k: string): string {
     mine: "增加礦石產量",
     herbGarden: "增加草藥產量",
     barracks: "訓練軍隊",
-    archery: "訓練弓箭部隊",
   };
   return descs[k] || "";
 }
@@ -189,6 +187,5 @@ function getAllBuildingInfo() {
     mine: { name: "礦場", desc: "增加礦石產量" },
     herbGarden: { name: "草藥園", desc: "增加草藥產量" },
     barracks: { name: "兵營", desc: "訓練軍隊" },
-    archery: { name: "弓箭塔", desc: "訓練弓箭部隊" },
   };
 }
