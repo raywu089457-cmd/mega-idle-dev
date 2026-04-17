@@ -55,6 +55,9 @@ const kingdomBuildingSchema = new mongoose.Schema({
 const userSchema = new mongoose.Schema({
   userId: { type: String, required: true, unique: true },
   username: String,
+  email: { type: String, unique: true, sparse: true },
+  passwordHash: String,
+  authProvider: { type: String, enum: ["discord", "email"], default: "discord" },
   createdAt: { type: Date, default: Date.now },
   lastTick: { type: Date, default: Date.now },
 
@@ -166,6 +169,7 @@ const userSchema = new mongoose.Schema({
     mine: { level: { type: Number, default: 0 } },
     herbGarden: { level: { type: Number, default: 0 } },
     barracks: { level: { type: Number, default: 0 } },
+    archery: { level: { type: Number, default: 0 } },
   },
 
   // =============================================================================
@@ -283,6 +287,7 @@ const userSchema = new mongoose.Schema({
     goldFromExploration: { type: Number, default: 0 },
     heroesRecruited: { type: Number, default: 0 },
     heroesTrained: { type: Number, default: 0 },
+    heroesExpelled: { type: Number, default: 0 },
     buildingsBuilt: { type: Number, default: 0 },
     buildingsUpgraded: { type: Number, default: 0 },
     dailyClaims: { type: Number, default: 0 },
@@ -298,9 +303,9 @@ const userSchema = new mongoose.Schema({
   // =============================================================================
   // Exploration Progress
   // =============================================================================
-  unlockedZones: [{ type: Number, default: [1] }],
+  unlockedZones: { type: [Number], default: [1] },
   currentZone: { type: Number, default: 1 },
-  defeatedBosses: [{ type: Number, default: [] }],
+  defeatedBosses: { type: [Number], default: [] },
 }, { versionKey: false });
 
 // =============================================================================
@@ -680,12 +685,13 @@ userSchema.methods.removeHeroFromTeam = function(heroId) {
 // Static Methods
 // =============================================================================
 
-userSchema.statics.getOrCreate = async function(userId, username) {
+userSchema.statics.getOrCreate = async function(userId, username, authProvider = "discord") {
   let user = await this.findOne({ userId });
   if (!user) {
     user = new this({
       userId,
       username,
+      authProvider,
       lastTick: new Date(),
       statistics: {
         firstPlayTime: new Date(),
@@ -695,6 +701,39 @@ userSchema.statics.getOrCreate = async function(userId, username) {
     await user.save();
   }
   return user;
+};
+
+userSchema.statics.findByEmail = async function(email) {
+  return this.findOne({ email: email.toLowerCase() });
+};
+
+userSchema.statics.register = async function({ email, password, username }) {
+  const existing = await this.findOne({ email: email.toLowerCase() });
+  if (existing) {
+    throw new Error("這個電子郵件已經被註冊過了");
+  }
+  const bcrypt = require("bcrypt");
+  const passwordHash = await bcrypt.hash(password, 12);
+  const userId = `email_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const user = new this({
+    userId,
+    username: username || `Player_${userId.slice(-4)}`,
+    email: email.toLowerCase(),
+    passwordHash,
+    authProvider: "email",
+    lastTick: new Date(),
+    statistics: {
+      firstPlayTime: new Date(),
+      lastActiveTime: new Date(),
+    },
+  });
+  await user.save();
+  return user;
+};
+
+userSchema.methods.verifyPassword = async function(password) {
+  const bcrypt = require("bcrypt");
+  return bcrypt.compare(password, this.passwordHash);
 };
 
 module.exports = mongoose.models.User || mongoose.model("User", userSchema);

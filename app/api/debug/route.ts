@@ -138,8 +138,9 @@ export async function POST(request: Request) {
         break;
       }
       case "deleteAccount": {
-        // Mark Discord userId as deleted so JWT callback refuses session restoration
-        markUserDeleted(user.userId);
+        // Determine provider from user document
+        const authProvider = (user as any).authProvider || "discord";
+        markUserDeleted(user.userId, authProvider);
         await User.deleteOne({ userId: user.userId });
         result = { deleted: true, userId: user.userId, needsReLogin: true };
         break;

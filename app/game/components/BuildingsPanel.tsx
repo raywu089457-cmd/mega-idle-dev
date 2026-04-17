@@ -2,13 +2,18 @@
 
 import { useState } from "react";
 import { GameData, useGameData } from "../hooks/useGameData";
+import { RESOURCE_NAMES, BUILDING_NAMES } from "../lib/localization";
 
 interface Props {
   data: GameData;
   api: ReturnType<typeof useGameData>["api"];
 }
 
-const ZONE_NAMES = ["", "翠綠草原", "陰濕沼澤", "荊棘森林", "古老礦山", "寒霜冰原", "烈焰荒原", "金色沙漠", "幽靈船塢", "黑暗洞窟", "混沌深淵"];
+const ZONE_NAMES = [
+  "", "翠綠草原 (Lv.1)", "迷霧山脈 (Lv.3)", "深邃洞穴 (Lv.5)",
+  "幽靈要塞 (Lv.7)", "烈焰火山 (Lv.9)", "冰霜凍土 (Lv.11)",
+  "遠古神殿 (Lv.13)", "龍之巢穴 (Lv.15)", "虛空裂隙 (Lv.17)", "混沌深淵 (Lv.20)"
+];
 
 export default function BuildingsPanel({ data, api }: Props) {
   const [selected, setSelected] = useState<string | null>(null);
@@ -124,9 +129,9 @@ export default function BuildingsPanel({ data, api }: Props) {
                 </div>
                 <div className="bld-cost">
                   <span className={data.gold >= cost.gold ? "" : "insufficient"}>💰{cost.gold}</span>
-                  {cost.wood && <span className={data.materials.wood >= cost.wood ? "" : "insufficient"}>🪵{cost.wood}</span>}
-                  {cost.iron && <span className={data.materials.iron >= cost.iron ? "" : "insufficient"}>⛓️{cost.iron}</span>}
-                  {cost.herbs && <span className={data.materials.herbs >= cost.herbs ? "" : "insufficient"}>🌿{cost.herbs}</span>}
+                  {cost.wood && <span className={data.materials.wood >= cost.wood ? "" : "insufficient"}>🪵{RESOURCE_NAMES.wood} {cost.wood}</span>}
+                  {cost.iron && <span className={data.materials.iron >= cost.iron ? "" : "insufficient"}>⛓️{RESOURCE_NAMES.iron} {cost.iron}</span>}
+                  {cost.herbs && <span className={data.materials.herbs >= cost.herbs ? "" : "insufficient"}>🌿{RESOURCE_NAMES.herbs} {cost.herbs}</span>}
                 </div>
                 <button
                   className="btn-sm btn-build"
@@ -147,12 +152,7 @@ export default function BuildingsPanel({ data, api }: Props) {
 }
 
 function getBuildingName(k: string): string {
-  const names: Record<string, string> = {
-    castle: "城堡", tavern: "酒館", monument: "紀念碑", warehouse: "倉庫",
-    guildHall: "公會大廳", weaponShop: "武器店", armorShop: "盔甲店",
-    potionShop: "藥水店", lumberMill: "伐木場", mine: "礦場", herbGarden: "草藥園", barracks: "兵營", archery: "弓箭塔",
-  };
-  return names[k] || k;
+  return BUILDING_NAMES[k] || k;
 }
 
 function getBuildingDesc(k: string): string {

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { GameData, Hero, useGameData } from "../hooks/useGameData";
 import ITEMS from "@/lib/game/_CONSTS/items";
+import { RESOURCE_NAMES } from "../lib/localization";
 
 type ItemEntry = { name: string; type: string; stats?: { attack: number; defense: number; hp: number }; cost?: Record<string, number>; healing?: number };
 const ITEMS_TYPED: Record<string, ItemEntry> = ITEMS as any;
@@ -24,7 +25,7 @@ const CATEGORIES: { id: Category; name: string; icon: string }[] = [
 
 const MAT_ICONS: Record<string, string> = {
   fruit: "🍎", water: "💧", wood: "🪵", iron: "⛓️",
-  herbs: "🌿", magic_stone: "💎", rations: "🍖", drinking_water: "🥤", potions: "🧪",
+  herbs: "🌿", magicStones: "💎", magic_stone: "💎", rations: "🍖", drinking_water: "🥤", potions: "🧪",
 };
 
 export default function CraftingPanel({ data, api }: Props) {
@@ -93,7 +94,7 @@ export default function CraftingPanel({ data, api }: Props) {
             <div className="item-cost">
               {Object.entries(item.cost || {}).map(([mat, amount]) => (
                 <span key={mat} className={`cost-item ${canAfford(item) ? "" : "insufficient"}`}>
-                  {MAT_ICONS[mat] || mat}: {String(amount)}
+                  {MAT_ICONS[mat] || mat}: {RESOURCE_NAMES[mat] || mat} {String(amount)}
                 </span>
               ))}
             </div>

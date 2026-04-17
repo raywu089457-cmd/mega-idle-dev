@@ -102,8 +102,11 @@ export default function DebugPanel() {
 
       setMsg("帳號已刪除，正在登出...");
 
-      // Step 2: Call NextAuth signout endpoint directly (not the react helper)
-      // This ensures the HTTP-only session cookie is actually cleared
+      // Step 2: Clear NextAuth client-side session cache via signOut()
+      // This updates useSession() state so home page won't redirect back to /game
+      await signOut({ redirect: false });
+
+      // Step 3: Call signout endpoint to clear the HTTP-only JWT cookie server-side
       const csrfToken = await getCsrfToken() ?? "";
       await fetch("/api/auth/signout", {
         method: "POST",
@@ -111,11 +114,7 @@ export default function DebugPanel() {
         body: new URLSearchParams({ csrfToken }),
       });
 
-      // Step 3: Clear all NextAuth cookies manually for good measure
-      document.cookie = "next-auth.session-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      document.cookie = "__Secure-next-auth.session-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-
-      // Step 4: Redirect to home - user must click Discord login again
+      // Step 4: Force full reload — clears NextAuth internal cache and any stale state
       window.location.href = "/";
     } catch (e) {
       setMsg(`請求失敗: ${e instanceof Error ? e.message : "未知錯誤"}`);

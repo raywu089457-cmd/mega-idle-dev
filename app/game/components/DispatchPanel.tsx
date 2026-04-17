@@ -8,7 +8,12 @@ interface Props {
   api: ReturnType<typeof useGameData>["api"];
 }
 
-const ZONE_NAMES = ["", "翠綠草原", "陰濕沼澤", "荊棘森林", "古老礦山", "寒霜冰原", "烈焰荒原", "金色沙漠", "幽靈船塢", "黑暗洞窟", "混沌深淵"];
+const ZONE_NAMES = [
+  "",
+  "翠綠草原 (Lv.1)", "迷霧山脈 (Lv.3)", "深邃洞穴 (Lv.5)",
+  "幽靈要塞 (Lv.7)", "烈焰火山 (Lv.9)", "冰霜凍土 (Lv.11)",
+  "遠古神殿 (Lv.13)", "龍之巢穴 (Lv.15)", "虛空裂隙 (Lv.17)", "混沌深淵 (Lv.20)"
+];
 const DIFF_NAMES = ["", "簡單", "普通", "困難"];
 
 export default function DispatchPanel({ data, api }: Props) {

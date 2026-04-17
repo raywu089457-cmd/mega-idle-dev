@@ -133,8 +133,8 @@ function HeroDetail({ hero, data, api, onClose }: HeroDetailProps) {
         {/* Action Buttons */}
         <div className="action-buttons">
           {hero.type === "territory" && (
-            <button onClick={() => doAction("train")} disabled={true} title="訓練功能已禁用，僅能透過戰鬥探索升級">
-              訓練 💰{trainingCost} (已禁用)
+            <button onClick={() => doAction("train")} disabled={action !== null || trainingCost > data.gold || hero.level >= 10} title="訓練英雄花費 💰{trainingCost}">
+              訓練 💰{trainingCost}
             </button>
           )}
           <button onClick={() => doAction("feed")} disabled={action !== null || !canFeed}>
@@ -176,16 +176,18 @@ export default function HeroesPanel({ data, api }: Props) {
     if (used >= cap) { setMsg("已達上限"); return; }
     setRecruiting(true);
     setMsg(null);
+    const heroToRecruit = selectedHero;
+    // Immediately clear selection so hero disappears from list
+    setSelectedHero(null);
     try {
       // If on wandering tab and a hero is selected, recruit that specific hero
-      if (tab === "wandering" && selectedHero) {
+      if (tab === "wandering" && heroToRecruit) {
         const res = await api("/api/heroes", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ heroId: selectedHero.id }),
+          body: JSON.stringify({ heroId: heroToRecruit.id }),
         });
-        setMsg(`成功招募 ${selectedHero.name}`);
-        setSelectedHero(null);
+        setMsg(`成功招募 ${heroToRecruit.name}`);
       } else {
         // Otherwise auto-select a random wandering hero
         const res = await api("/api/heroes", {

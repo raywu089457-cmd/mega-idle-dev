@@ -1,6 +1,7 @@
 "use client";
 
 import { GameData } from "../hooks/useGameData";
+import { RESOURCE_NAMES, BUILDING_NAMES } from "../lib/localization";
 
 interface Props {
   data: GameData;
@@ -8,7 +9,7 @@ interface Props {
 
 const MAT_ICONS: Record<string, string> = {
   fruit: "🍎", water: "💧", wood: "🪵", iron: "⛓️",
-  herbs: "🌿", magic_stone: "💎", rations: "🍖", drinking_water: "🥤", potions: "🧪",
+  herbs: "🌿", magicStones: "💎", magic_stone: "💎", rations: "🍖", drinking_water: "🥤", potions: "🧪",
 };
 
 export default function HomePanel({ data }: Props) {
@@ -29,7 +30,7 @@ export default function HomePanel({ data }: Props) {
           {Object.entries(data.materials).map(([k, v]) => (
             <div key={k} className="mat-item">
               <span>{MAT_ICONS[k] || "📦"}</span>
-              <span className="mat-name">{k}</span>
+              <span className="mat-name">{RESOURCE_NAMES[k] || k}</span>
               <span className="mat-val">{Number(v).toLocaleString()}</span>
             </div>
           ))}
@@ -55,7 +56,7 @@ export default function HomePanel({ data }: Props) {
         <div className="buildings-grid">
           {Object.entries(data.buildings).map(([k, b]) => (
             <div key={k} className="bld-item">
-              <span className="bld-name">{getBldName(k)}</span>
+              <span className="bld-name">{BUILDING_NAMES[k] || k}</span>
               <span className="bld-lv">Lv.{b.level}</span>
             </div>
           ))}
@@ -95,13 +96,4 @@ export default function HomePanel({ data }: Props) {
       </section>
     </div>
   );
-}
-
-function getBldName(k: string): string {
-  const names: Record<string, string> = {
-    castle: "城堡", tavern: "酒館", monument: "紀念碑", warehouse: "倉庫",
-    guildHall: "公會大廳", weaponShop: "武器店", armorShop: "盔甲店",
-    potionShop: "藥水店", lumberMill: "伐木場", mine: "礦場", herbGarden: "草藥園", barracks: "兵營",
-  };
-  return names[k] || k;
 }
