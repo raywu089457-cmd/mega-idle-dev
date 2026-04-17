@@ -8,12 +8,17 @@ const MONGODB_URI = process.env.MONGODB_URI;
 const WANDERING_SPAWN_CHANCE = 0.3;
 
 async function connectDB() {
+  console.log(`[connectDB] MONGODB_URI available: ${!!MONGODB_URI}`);
   if (!MONGODB_URI) {
     throw new Error("MONGODB_URI environment variable is not set");
   }
 
   if (mongoose.connection.readyState === 0) {
+    console.log(`[connectDB] Connecting to MongoDB...`);
     await mongoose.connect(MONGODB_URI, { bufferCommands: false });
+    console.log(`[connectDB] Connected successfully`);
+  } else {
+    console.log(`[connectDB] Already connected, state: ${mongoose.connection.readyState}`);
   }
   return mongoose.connection;
 }
