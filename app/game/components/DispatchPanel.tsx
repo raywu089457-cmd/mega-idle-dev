@@ -37,7 +37,7 @@ export default function DispatchPanel({ data, api }: Props) {
       await api("/api/dispatch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ heroIds: selected, zone, subZone, action: "send" }),
+        body: JSON.stringify({ heroIds: selected, zone, subZone, action: "dispatch" }),
       });
       setMsg(`已派遣 ${selected.length} 名英雄到 ${ZONE_NAMES[zone]} ${DIFF_NAMES[subZone]}`);
       setSelected([]);
