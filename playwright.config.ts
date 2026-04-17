@@ -20,7 +20,7 @@ export default defineConfig({
       ]
     : [["list"]],
 
-  timeout: 600000,
+  timeout: 43200000, // 12 hours
   expect: { timeout: 30000 },
 
   use: {

@@ -133,8 +133,8 @@ function HeroDetail({ hero, data, api, onClose }: HeroDetailProps) {
         {/* Action Buttons */}
         <div className="action-buttons">
           {hero.type === "territory" && (
-            <button onClick={() => doAction("train")} disabled={action !== null || data.gold < trainingCost}>
-              訓練 💰{trainingCost}
+            <button onClick={() => doAction("train")} disabled={true} title="訓練功能已禁用，僅能透過戰鬥探索升級">
+              訓練 💰{trainingCost} (已禁用)
             </button>
           )}
           <button onClick={() => doAction("feed")} disabled={action !== null || !canFeed}>
