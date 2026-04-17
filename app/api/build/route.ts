@@ -25,6 +25,7 @@ const BUILDING_COSTS: Record<string, (level: number) => Record<string, number>> 
   herbGarden: (level) => ({ gold: Math.floor(60 * Math.pow(level, 2)), wood: Math.floor(20 * level) }),
   guildHall: (level) => ({ gold: Math.floor(100 * Math.pow(level, 2)), wood: Math.floor(30 * level), iron: Math.floor(10 * level) }),
   barracks: (level) => ({ gold: Math.floor(100 * Math.pow(level, 2)), wood: Math.floor(30 * level), iron: Math.floor(10 * level) }),
+  archery: (level) => ({ gold: Math.floor(80 * Math.pow(level, 2)), wood: Math.floor(40 * level) }),
 };
 
 const VALID_BUILDINGS = Object.keys(BUILDING_COSTS);
