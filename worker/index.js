@@ -59,6 +59,7 @@ async function broadcast(userId, userData) {
 
 /**
  * Process exploration battles for a user's dispatched heroes
+ * Heroes stay exploring until recalled, but combat runs every tick
  */
 async function processExploration(user) {
   const exploringHeroes = user.heroes.roster.filter(h => h.isExploring);
@@ -71,6 +72,16 @@ async function processExploration(user) {
 
   const subZoneData = zoneData.sub_zones.find(sz => sz.id === exploringHeroes[0].currentSubZone);
   if (!subZoneData) return;
+
+  // Check if dispatch cooldown has passed (30 seconds)
+  const dispatchCooldown = user.cooldowns?.dispatch;
+  if (dispatchCooldown) {
+    const cooldownElapsed = Date.now() - new Date(dispatchCooldown).getTime();
+    if (cooldownElapsed < 30000) {
+      // Still in cooldown - don't process, heroes stay exploring
+      return;
+    }
+  }
 
   // Run combat
   const resolver = new CombatResolver();
@@ -95,6 +106,14 @@ async function processExploration(user) {
       // Defeat - lose some hunger/thirst, reduced HP (revived at half HP by CombatResolver)
       hero.hunger = Math.max(0, hero.hunger - 10);
       hero.thirst = Math.max(0, hero.thirst - 10);
+      // If hero is too hungry/thirsty, they return home
+      if (hero.hunger <= 0 || hero.thirst <= 0) {
+        hero.isExploring = false;
+        hero.currentZone = null;
+        hero.currentSubZone = null;
+        user.removeHeroFromTeam(hero.id);
+        continue;
+      }
     }
 
     // Consume rations and water if available
@@ -106,6 +125,8 @@ async function processExploration(user) {
       user.materials.set("drinking_water", user.materials.get("drinking_water") - 1);
       hero.thirst = Math.min(100, hero.thirst + 30);
     }
+
+    // Heroes stay exploring after combat (until recalled or resource depletion)
   }
 
   // Give gold reward
@@ -147,14 +168,6 @@ async function processExploration(user) {
     logMessages: result.logMessages,
   });
 
-  // Reset exploration state
-  for (const hero of exploringHeroes) {
-    hero.isExploring = false;
-    hero.currentZone = null;
-    hero.currentSubZone = null;
-    user.removeHeroFromTeam(hero.id);
-  }
-
   // Unlock next zone if boss was defeated
   if (result.victory && subZoneData.is_boss && user.unlockedZones) {
     const nextZone = exploringHeroes[0].currentZone + 1;
@@ -162,6 +175,9 @@ async function processExploration(user) {
       user.unlockedZones.push(nextZone);
     }
   }
+
+  // Reset cooldown after successful exploration cycle
+  user.cooldowns.dispatch = new Date();
 }
 
 async function processAllUsers() {
