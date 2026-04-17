@@ -231,16 +231,24 @@ async function processExploration(user) {
 }
 
 async function processAllUsers() {
-  const users = await User.find({});
-  console.log(`[tick] Processing ${users.length} user(s)`);
+  let users;
+  try {
+    users = await User.find({});
+  } catch (err) {
+    console.error(`[tick] ERROR finding users:`, err.message);
+    return;
+  }
+  console.log(`[tick] ${new Date().toISOString()} Processing ${users.length} user(s)`);
 
   for (const user of users) {
     try {
       // 1. Run idle tick (monument production, tavern, potion shop)
       await user.processIdleTick();
+      console.log(`[tick] Idle tick done for ${user.userId}, gold=${user.gold}`);
 
       // 2. Process exploration battles
       await processExploration(user);
+      console.log(`[tick] Exploration done for ${user.userId}`);
 
       // 3. Wandering hero spawning (30% chance per user per tick if under cap)
       const canSpawnWandering =
