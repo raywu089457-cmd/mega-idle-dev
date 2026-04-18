@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { GameData, Hero, useGameData } from "../hooks/useGameData";
 import { getXpForLevel } from "@/lib/game/formulas/xp";
+import ITEMS from "@/lib/game/_CONSTS/items";
 
 interface Props {
   data: GameData;
@@ -10,6 +11,7 @@ interface Props {
 }
 
 const RARITY_COLOR: Record<string, string> = { S: "#ff6b6b", A: "#ffa500", B: "#ffd700", C: "#4ade80", D: "#60a5fa", E: "#a78bfa", F: "#9ca3af" };
+const PROFESSION_MAP: Record<string, string> = { melee: "近戰", ranged: "遠程", mage: "法師", healer: "補師", tank: "坦克", assassin: "刺客" };
 const SLOT_NAMES = ["weapon", "armor", "helmet", "accessory"] as const;
 const SLOT_ICONS: Record<string, string> = { weapon: "⚔️", armor: "🛡️", helmet: "⛑️", accessory: "💍" };
 
@@ -24,6 +26,8 @@ function HeroDetail({ hero, data, api, onClose }: HeroDetailProps) {
   const [action, setAction] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [confirmExpel, setConfirmExpel] = useState(false);
+  const [activeSlot, setActiveSlot] = useState<string | null>(null);
+  const [equipTarget, setEquipTarget] = useState<{ itemId: string; slot: string } | null>(null);
 
   const xpToNext = getXpForLevel(hero.level);
   const xpProgress = (hero.experience || 0) / xpToNext;
@@ -37,12 +41,34 @@ function HeroDetail({ hero, data, api, onClose }: HeroDetailProps) {
     setAction(actionType);
     setMsg(null);
     try {
-      const res = await api(`/api/heroes/${actionType}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ heroId: hero.id }),
-      });
-      setMsg(res.data?.reason || "成功");
+      // Handle equip/unequip from detail panel
+      if (actionType.startsWith("equip_")) {
+        const parts = actionType.split("_");
+        const slot = parts[1];
+        const itemId = parts.slice(2).join("_");
+        const res = await api("/api/inventory", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "equip", itemId, heroId: hero.id, slot }),
+        });
+        setMsg(res.data?.reason || "成功");
+        setActiveSlot(null);
+      } else if (actionType.startsWith("unequip_")) {
+        const slot = actionType.split("_")[1];
+        const res = await api("/api/inventory", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "unequip", heroId: hero.id, slot }),
+        });
+        setMsg(res.data?.reason || "成功");
+      } else {
+        const res = await api(`/api/heroes/${actionType}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ heroId: hero.id }),
+        });
+        setMsg(res.data?.reason || "成功");
+      }
     } catch (e) {
       setMsg(e instanceof Error ? e.message : "失敗");
     } finally {
@@ -105,13 +131,73 @@ function HeroDetail({ hero, data, api, onClose }: HeroDetailProps) {
         <div className="equipment-slots">
           <h4>裝備</h4>
           <div className="slots-grid">
-            {SLOT_NAMES.map((slot) => (
-              <div key={slot} className="equip-slot">
-                <span className="slot-icon">{SLOT_ICONS[slot]}</span>
-                <span className="slot-item">{hero.equipment?.[slot] || "空"}</span>
-              </div>
-            ))}
+            {SLOT_NAMES.map((slot) => {
+              const equipped = hero.equipment?.[slot];
+              return (
+                <div
+                  key={slot}
+                  className={`equip-slot ${activeSlot === slot ? "active-slot" : ""}`}
+                  onClick={() => setActiveSlot(activeSlot === slot ? null : slot)}
+                >
+                  <span className="slot-icon">{SLOT_ICONS[slot]}</span>
+                  <span className="slot-item">{equipped || "空"}</span>
+                  {equipped && (
+                    <button
+                      className="slot-unequip-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        doAction(`unequip_${slot}`);
+                      }}
+                      title="卸下裝備"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
+
+          {/* Equipment List Panel - shows when a slot is clicked */}
+          {activeSlot && (
+            <div className="equip-list-panel">
+              <div className="equip-list-header">
+                <span>選擇{SLOT_NAMES.includes(activeSlot as any) ? ["武器", "盔甲", "頭盔", "飾品"][SLOT_NAMES.indexOf(activeSlot as any)] : activeSlot} - 可用物品</span>
+                <button className="close-equip-list" onClick={() => setActiveSlot(null)}>✕</button>
+              </div>
+              <div className="equip-list-items">
+                {(() => {
+                  const slotKey = activeSlot as keyof typeof data.inventory;
+                  const inv = data.inventory || {};
+                  const slotItems = (inv as any)[slotKey === "weapon" ? "weapons" : slotKey === "armor" ? "armor" : slotKey === "helmet" ? "helmets" : "accessories"] || {};
+                  const availableItems = Object.entries(slotItems)
+                    .filter(([, count]) => (count as number) > 0)
+                    .map(([itemId, count]) => ({ itemId, count }))
+                    .filter(i => i.count > 0);
+
+                  if (availableItems.length === 0) {
+                    return <p className="no-items">背包裡沒有可用的物品</p>;
+                  }
+
+                  return availableItems.map(({ itemId, count }) => {
+                    const item = ITEMS[itemId];
+                    if (!item) return null;
+                    return (
+                      <div key={itemId} className="equip-list-item" onClick={() => doAction(`equip_${activeSlot}_${itemId}`)}>
+                        <span className="item-name">{item.name}</span>
+                        <span className="item-stats">
+                          {item.stats?.attack > 0 && <span className="stat-atk">⚔️+{item.stats.attack}</span>}
+                          {item.stats?.defense > 0 && <span className="stat-def">🛡️+{item.stats.defense}</span>}
+                          {item.stats?.hp !== undefined && item.stats.hp !== 0 && <span className="stat-hp">❤️+{item.stats.hp}</span>}
+                        </span>
+                        <span className="item-count">x{count}</span>
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Exploration Info */}
@@ -279,9 +365,9 @@ export default function HeroesPanel({ data, api }: Props) {
 
   return (
     <div className="panel">
-      <div className="panel-header">
-        <h2>🧙 英雄管理</h2>
-        <div className="tab-bar">
+      <div className="panel-header heroes-panel-header">
+        <h2>英雄管理</h2>
+        <div className="tab-bar heroes-tab-bar">
           <button className={`tab ${tab === "territory" ? "active" : ""}`} onClick={() => setTab("territory")}>
             領地 ({data.heroes.roster.filter((h: Hero) => h.type === "territory").length}/{data.heroes.territoryHeroCap})
           </button>
@@ -311,28 +397,31 @@ export default function HeroesPanel({ data, api }: Props) {
           return (
             <div
               key={h.id}
-              className={`hero-row ${h.isExploring ? "exploring" : ""} ${needsAttention ? "needs-attention" : ""} ${isSelected ? "selected" : ""}`}
+              className={`hero-card ${h.isExploring ? "exploring" : ""} ${needsAttention ? "needs-attention" : ""} ${isSelected ? "selected" : ""}`}
               onClick={handleClick}
             >
-              <div className="hero-info">
+              <div className="hero-card-name">
                 <span className="hero-name" style={{ color: RARITY_COLOR[h.rarity || "D"] }}>
                   {h.name}
                 </span>
-                {h.rarity && <span className="rarity-badge" style={{ background: RARITY_COLOR[h.rarity] }}>{h.rarity}</span>}
-                <span className="hero-lv">Lv.{h.level}</span>
-                {h.isExploring && <span className="badge">⚔️ 探索中</span>}
-                {needsAttention && <span className="badge warning">⚠️ 需要注意</span>}
+                {h.profession && <span className="hero-profession-tag">[{PROFESSION_MAP[h.profession] || h.profession}]</span>}
               </div>
-              <div className="hero-stats">
-                ⚔️{h.atk} 🛡️{h.def} ❤️{h.currentHp}/{h.maxHp}
-                {h.profession && <span className="hero-profession">{h.profession}</span>}
+              <div className="hero-card-hp">
+                <span className="hp-label">❤️</span>
+                <div className="hp-bar-gradient">
+                  <div className="hp-fill-red" style={{ width: `${Math.min(100, (h.currentHp / h.maxHp) * 100)}%` }} />
+                </div>
+                <span className="hp-text">{h.currentHp}/{h.maxHp}</span>
               </div>
-              <div className="hero-needs">
-                🍖{Math.round(h.hunger)}/100 💧{Math.round(h.thirst)}/100
-                {h.hunger < 30 && <span className="needs-badge">飢餓</span>}
-                {h.thirst < 30 && <span className="needs-badge">口渴</span>}
+              <div className="hero-card-stats">
+                <span className="stat-atk">⚔️ ATK {h.atk}</span>
+                <span className="stat-def">🛡️ DEF {h.def}</span>
               </div>
-              {/* Mini XP bar */}
+              <div className="hero-card-needs">
+                🍖 {Math.round(h.hunger)}/100 &nbsp; 💧 {Math.round(h.thirst)}/100
+              </div>
+              {h.isExploring && <span className="badge exploring-badge">⚔️ 探索中</span>}
+              {needsAttention && <span className="badge warning-badge">⚠️ 需要注意</span>}
               <div className="mini-xp-bar">
                 <div className="mini-xp-fill" style={{ width: `${Math.min(100, ((h.experience || 0) / getXpForLevel(h.level)) * 100)}%` }} />
               </div>
