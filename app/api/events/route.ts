@@ -15,6 +15,7 @@ export async function GET(): Promise<Response> {
 
   const stream = new ReadableStream({
     start(controller) {
+      console.log(`[SSE] Client connected: ${userId}`);
       // Send initial connected event with user context
       const connectedEvent = `event: connected\ndata: ${JSON.stringify({ userId })}\n\n`;
       controller.enqueue(encoder.encode(connectedEvent));
@@ -25,6 +26,7 @@ export async function GET(): Promise<Response> {
           // Only forward events for this user
           const payload = JSON.parse(data);
           if (payload.userId !== userId) return;
+          console.log(`[SSE] Broadcasting update to: ${userId}`);
 
           const message = `event: user-update\ndata: ${data}\n\n`;
           controller.enqueue(encoder.encode(message));
