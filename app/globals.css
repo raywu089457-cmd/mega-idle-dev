@@ -295,7 +295,16 @@ html, body {
 .log-row.defeat { background: rgba(239, 68, 68, 0.08); border-left: 3px solid var(--danger); }
 .log-time { color: var(--text3); font-size: 0.7rem; min-width: 70px; }
 .log-content { flex: 1; color: var(--text2); }
-.log-reward { color: var(--gold); font-weight: 600; }
+.log-row.expandable .log-expand-icon { display: inline-block; }
+.log-row.expandable:hover .log-expand-icon { color: var(--accent); }
+.log-expand-icon { font-size: 0.65rem; color: var(--text3); min-width: 16px; text-align: center; }
+.log-message {
+  padding: 0.3rem 0.75rem 0.3rem calc(0.75rem + 70px);
+  font-size: 0.75rem; color: var(--text2);
+  background: rgba(255,255,255,0.03);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.log-message::before { content: "  └ "; color: var(--text3); }
 
 /* Loading/error */
 .game-error { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; gap: 1rem; }
