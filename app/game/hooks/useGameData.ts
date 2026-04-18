@@ -142,6 +142,11 @@ export function useGameData() {
       console.log("SSE connected");
     });
 
+    // Use onmessage as well (EventSource also fires this for unnamed events)
+    es.onmessage = (event) => {
+      console.log("[SSE] onmessage received:", event.data?.slice(0, 200));
+    };
+
     es.addEventListener("user-update", (event) => {
       try {
         const update = JSON.parse(event.data);
