@@ -52,7 +52,9 @@ export default function Navigation({ active, onChange }: Props) {
 
       {/* Mobile: bottom tab bar with 5 primary tabs + more button */}
       <nav className="mobile-nav">
-        {PRIMARY_TABS.map(tab => (
+        {PRIMARY_TABS.map(tabId => {
+          const tab = ALL_TABS.find(t => t.id === tabId)!;
+          return (
           <button
             key={tab.id}
             className={`mobile-nav-btn ${active === tab.id ? "active" : ""}`}
@@ -61,7 +63,8 @@ export default function Navigation({ active, onChange }: Props) {
             <span className="mobile-nav-icon">{tab.icon}</span>
             <span className="mobile-nav-label">{tab.label}</span>
           </button>
-        ))}
+          );
+        })}
         <button
           className={`mobile-nav-btn more-btn ${showMore ? "active" : ""}`}
           onClick={() => setShowMore(!showMore)}
