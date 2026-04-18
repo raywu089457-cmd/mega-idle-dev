@@ -33,10 +33,10 @@ export default function Navigation({ active, onChange }: Props) {
 
   return (
     <>
-      {/* Desktop: top header with all tabs */}
-      <header className="game-header">
-        <h1>⚔️ 統一之戰</h1>
-        <div className="header-info desktop-only">
+      {/* Desktop: top header with all tabs (no bottom nav) */}
+      <header className="game-header desktop-header">
+        <h1>⚔️ Mega Idle</h1>
+        <div className="header-info">
           {ALL_TABS.map(tab => (
             <button
               key={tab.id}

@@ -179,9 +179,17 @@ html, body {
 /* Hide on mobile */
 .mobile-hidden { display: none; }
 .mobile-only { display: none; }
+.mobile-nav { display: none; }
+.desktop-header { display: flex; }
 
-/* Load screen */
-.loading-screen {
+/* Desktop-only elements */
+@media (max-width: 768px) {
+  .mobile-nav { display: flex; }
+  .mobile-hidden { display: flex; }
+  .mobile-only { display: flex; }
+  .desktop-header { display: none; }
+  .game-shell { padding-bottom: 75px; }
+}
   position: fixed; inset: 0; z-index: 200;
   background: var(--bg);
   display: flex; flex-direction: column;
@@ -462,10 +470,19 @@ html, body {
   .panel { padding: 1rem; border-radius: 8px; }
   .panel h2 { font-size: 0.8rem; }
 
+  /* Tab bar - HeroesPanel tab switcher */
+  .tab-bar { flex-direction: row; gap: 0.5rem; margin-bottom: 1rem; }
+  .tab {
+    flex: 1; text-align: center; padding: 0.65rem 0.5rem;
+    font-size: 0.85rem; min-height: 44px;
+  }
+  .tab-bar .tab span { display: block; font-size: 0.7rem; opacity: 0.7; margin-top: 0.1rem; }
+
   /* Hero row - card style for touch */
-  .hero-row { padding: 0.75rem; min-height: 64px; }
+  .hero-row { padding: 0.75rem; min-height: 72px; }
   .hero-info { flex-wrap: wrap; gap: 0.3rem; }
   .hero-name { font-size: 1rem; }
+  .rarity-badge { font-size: 0.6rem; padding: 0.05rem 0.25rem; }
 
   /* Buttons - larger touch targets */
   .btn-primary, .btn-secondary, .btn-danger {

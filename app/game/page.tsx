@@ -33,7 +33,7 @@ export default function GamePage() {
   }, [status, fetchUser]);
 
   if (status === "loading" || loading) {
-    return <div className="full-loading"><div className="spinner" /><p>載入中...</p></div>;
+    return <div className="full-loading"><div className="spinner" /><p>⚔️ Mega Idle 載入中...</p></div>;
   }
 
   if (status === "unauthenticated") {

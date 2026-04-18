@@ -349,16 +349,20 @@ export default function HeroesPanel({ data, api }: Props) {
       </div>
 
       <div className="panel-footer">
-        <button className="btn-primary" onClick={recruit} disabled={recruiting || used >= cap}>
-          {recruiting ? "招募中..." : tab === "wandering" && selectedHero ? `招募 ${selectedHero.name}` : `招募${getLabel(tab)}英雄`}
-        </button>
-        {tab === "wandering" && wanderingHeroes.length > 0 && territoryCapUsed < territoryCap && (
-          <button className="btn-secondary" onClick={recruitAll} disabled={recruiting}>
-            招募全部流浪英雄
-          </button>
-        )}
-        {tab === "wandering" && !selectedHero && wanderingHeroes.length > 0 && territoryCapUsed < territoryCap && (
-          <span className="hint">點擊英雄選擇後再點招募</span>
+        {tab === "wandering" && (
+          <>
+            <button className="btn-primary" onClick={recruit} disabled={recruiting || used >= cap}>
+              {recruiting ? "招募中..." : selectedHero ? `招募 ${selectedHero.name}` : "招募流浪英雄"}
+            </button>
+            {wanderingHeroes.length > 0 && territoryCapUsed < territoryCap && (
+              <button className="btn-secondary" onClick={recruitAll} disabled={recruiting}>
+                招募全部 ({wanderingHeroes.length})
+              </button>
+            )}
+            {!selectedHero && wanderingHeroes.length > 0 && (
+              <span className="hint">點擊選擇</span>
+            )}
+          </>
         )}
         {msg && <span className="msg">{msg}</span>}
       </div>
