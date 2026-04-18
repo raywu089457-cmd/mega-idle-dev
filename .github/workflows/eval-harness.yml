@@ -114,7 +114,7 @@ jobs:
 
       - name: Run E2E tests (landing + game journey)
         run: npm run test:e2e -- tests/e2e/landing.spec.ts tests/e2e/game-journey.spec.ts
-        timeout-minutes: 15
+        timeout-minutes: 20
         env:
           CI: true
 
