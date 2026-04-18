@@ -56,7 +56,7 @@ export default function LogsPanel({ logs }: Props) {
               style={{ cursor: l.logMessages?.length ? "pointer" : "default" }}
               title={l.logMessages?.length ? "點擊展開戰報詳情" : undefined}
             >
-              {l.logMessages?.length > 0 && (
+              {(l.logMessages?.length ?? 0) > 0 && (
                 <span className="log-expand-icon">{expandedId === l.id ? "▼" : "▶"}</span>
               )}
               <div className="log-time">{time(l.timestamp)}</div>
