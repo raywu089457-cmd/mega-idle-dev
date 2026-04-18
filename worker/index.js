@@ -76,6 +76,7 @@ async function broadcast(userId, userData) {
  * If hunger or thirst < 30, hero is weakened (effectiveAtk/Def halved in combat)
  */
 async function processHungerThirst(user, tickCount) {
+  console.log(`[hunger] Starting for user ${user.userId}, tickCount=${tickCount}`);
   // Defensive: ensure heroes.roster exists and is an array
   if (!user.heroes?.roster || !Array.isArray(user.heroes.roster)) {
     return;
@@ -117,6 +118,7 @@ async function processHungerThirst(user, tickCount) {
  * Hunters consume rations and provide gold/XP rewards
  */
 async function processHunts(user) {
+  console.log(`[hunt] Starting for user ${user.userId}`);
   const hunters = user.army?.units?.archery?.huntsman || 0;
   if (hunters <= 0) {
     return;
@@ -173,6 +175,7 @@ async function processHunts(user) {
  * TURN-BASED: Execute ONE round per tick, tracking combat state
  */
 async function processExploration(user) {
+  console.log(`[exploration] Starting for user ${user.userId}`);
   // Defensive: ensure heroes object and roster array exist
   if (!user.heroes?.roster || !Array.isArray(user.heroes.roster)) {
     console.error(`[exploration] User ${user.userId} has no heroes.roster, skipping`);
