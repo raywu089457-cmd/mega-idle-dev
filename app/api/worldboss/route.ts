@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { UserRepository } from "@/lib/repositories/UserRepository";
 import WorldBoss from "@/models/WorldBoss";
 import { CombatResolver } from "@/lib/game/combat/CombatResolver";
+import { HeroManagementService } from "@/lib/game/services/HeroManagementService";
 
 // Cast WorldBoss to any to access static methods defined on the schema
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -109,10 +110,15 @@ export async function POST(request: Request) {
     const resolver = new CombatResolver();
     const result = resolver.resolveCombat(heroes, bossSubZone, 0);
 
-    // Apply damage to boss
+    // Calculate real damage dealt using effectiveAtk (accounts for hunger/thirst weakness)
+    // Boss DEF=150 is used in the damage formula: Math.max(1, effectiveAtk - boss.defense)
+    // No crit calculation for world boss damage (keep it predictable)
+    const bossDef = boss.defense;
     const totalDamage = heroes.reduce((sum: number, h: any) => {
-      // Estimate damage dealt (this is simplified)
-      return sum + (h.atk * heroes.length * 2);
+      const heroInfo = HeroManagementService.getHeroInfo(h);
+      const effectiveAtk = heroInfo.effectiveAtk;
+      const damage = Math.max(1, effectiveAtk - bossDef);
+      return sum + damage;
     }, 0);
 
     await boss.applyDamage(totalDamage);

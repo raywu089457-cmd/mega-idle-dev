@@ -90,8 +90,11 @@ export default function HomePanel({ data }: Props) {
           <div>探索 {data.statistics.explorations || 0} 次</div>
           <div>勝利 {data.statistics.wins || 0} / 敗 {data.statistics.losses || 0}</div>
           <div>黃金總獲得 {data.statistics.goldEarned?.toLocaleString() || 0}</div>
+          <div>流浪金幣 {data.statistics.goldFromWandering?.toLocaleString() || 0}</div>
           <div>英雄招募 {data.statistics.heroesRecruited || 0}</div>
           <div>建築升級 {data.statistics.buildingsUpgraded || 0}</div>
+          <div>連續登入 {data.statistics.consecutiveDays || 0} 天</div>
+          <div>連續週數 {data.statistics.consecutiveWeeks || 0} 週</div>
         </div>
       </section>
     </div>

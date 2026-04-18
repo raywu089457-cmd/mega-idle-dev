@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { getGoldCapacity, getMaterialCapacity } = require("../lib/game/formulas/capacity");
 
 // =============================================================================
 // Hero Schema - Used within HeroManager
@@ -321,16 +322,16 @@ userSchema.index({ userId: 1, deletedAt: 1 });
 // Virtual Getters
 // =============================================================================
 
-// Gold capacity based on warehouse level — generous for casual players
+// Gold capacity based on warehouse level — uses formula from lib/game/formulas/capacity
 userSchema.virtual('goldCapacity').get(function() {
   const warehouseLevel = this.buildings?.warehouse?.level || 0;
-  return 100000 + (warehouseLevel * 50000);
+  return getGoldCapacity(warehouseLevel);
 });
 
-// Material capacity based on warehouse level
+// Material capacity based on warehouse level — uses formula from lib/game/formulas/capacity
 userSchema.virtual('materialCapacity').get(function() {
   const warehouseLevel = this.buildings?.warehouse?.level || 0;
-  return 500 + (warehouseLevel * 100);
+  return getMaterialCapacity(warehouseLevel);
 });
 
 // Territory hero cap based on castle level (max 48 for 2 menu rows)
@@ -439,6 +440,11 @@ userSchema.methods.getBuildingLevel = function(type) {
 };
 
 userSchema.methods.upgradeBuilding = function(type, cost) {
+  // Check build cooldown
+  if (this.getCooldownRemaining('build') > 0) {
+    return { success: false, reason: '建築升級冷卻中' };
+  }
+
   if (!this.canAfford(cost)) return { success: false, reason: '資源不足' };
   if (!this.buildings[type]) return { success: false, reason: '建築不存在' };
 
@@ -447,19 +453,34 @@ userSchema.methods.upgradeBuilding = function(type, cost) {
   if (currentLevel >= maxLevel) return { success: false, reason: '已達最高等級' };
 
   this.spendResources(cost);
-  this.buildings[type].level++;
+  // Immutable pattern: create new building object instead of mutating
+  this.buildings = {
+    ...this.buildings,
+    [type]: { level: this.buildings[type].level + 1 },
+  };
   this.statistics.buildingsUpgraded++;
+  this.cooldowns.build = new Date();
 
   return { success: true, newLevel: this.buildings[type].level };
 };
 
 userSchema.methods.buildStructure = function(type, cost) {
+  // Check build cooldown
+  if (this.getCooldownRemaining('build') > 0) {
+    return { success: false, reason: '建築升級冷卻中' };
+  }
+
   if (!this.canAfford(cost)) return { success: false, reason: '資源不足' };
   if (this.buildings[type]?.level > 0) return { success: false, reason: '建築已存在' };
 
   this.spendResources(cost);
-  this.buildings[type] = { level: 1 };
+  // Immutable pattern: create new buildings object instead of mutating
+  this.buildings = {
+    ...this.buildings,
+    [type]: { level: 1 },
+  };
   this.statistics.buildingsBuilt++;
+  this.cooldowns.build = new Date();
 
   return { success: true };
 };

@@ -2,9 +2,17 @@ const axios = require("axios");
 const mongoose = require("mongoose");
 const User = require("../models/User");
 const { HeroManagementService } = require("../lib/game/services/HeroManagementService");
+const { dispatch: DISPATCH_COOLDOWN } = require("../lib/game/_CONSTS/cooldowns");
+const { updateTaskProgress } = require("../lib/game/guild/guild-tasks");
 
 const MONGODB_URI = process.env.MONGODB_URI;
 const WANDERING_SPAWN_CHANCE = 0.3;
+
+// Hunter system constants
+const HUNT_COOLDOWN_SECONDS = 60;
+const RATIONS_PER_10_HUNTERS = 1;
+const HUNT_GOLD_BASE = 5;
+const HUNT_XP_BASE = 10;
 
 // Inline subZones data - avoids module resolution issues across deployments
 const subZones = {
@@ -63,12 +71,104 @@ async function broadcast(userId, userData) {
 }
 
 /**
+ * Process hunger/thirst decay for all territory heroes
+ * Each tick: hunger -= 1, thirst -= 1 (minimum 0)
+ * If hunger or thirst < 30, hero is weakened (effectiveAtk/Def halved in combat)
+ */
+async function processHungerThirst(user) {
+  if (!user.heroes || !Array.isArray(user.heroes.roster)) {
+    return;
+  }
+
+  const territoryHeroes = user.heroes.roster.filter(h => h.type === "territory");
+  if (territoryHeroes.length === 0) {
+    return;
+  }
+
+  let modified = false;
+  for (const hero of territoryHeroes) {
+    if (hero.hunger === undefined) hero.hunger = 100;
+    if (hero.thirst === undefined) hero.thirst = 100;
+
+    // Decay hunger and thirst by 1 each tick, minimum 0
+    const newHunger = Math.max(0, hero.hunger - 1);
+    const newThirst = Math.max(0, hero.thirst - 1);
+
+    if (hero.hunger !== newHunger || hero.thirst !== newThirst) {
+      hero.hunger = newHunger;
+      hero.thirst = newThirst;
+      modified = true;
+    }
+  }
+
+  if (modified) {
+    user.markModified("heroes.roster");
+  }
+}
+
+/**
+ * Process army hunts for a user
+ * Hunters consume rations and provide gold/XP rewards
+ */
+async function processHunts(user) {
+  const hunters = user.army?.units?.archery?.huntsman || 0;
+  if (hunters <= 0) {
+    return;
+  }
+
+  // Check hunter cooldown
+  const lastHunt = user.cooldowns?.hunter;
+  const now = Date.now();
+  if (lastHunt) {
+    const elapsed = now - new Date(lastHunt).getTime();
+    const cooldownMs = HUNT_COOLDOWN_SECONDS * 1000;
+    if (elapsed < cooldownMs) {
+      return; // Hunters still on cooldown
+    }
+  }
+
+  // Calculate rations consumption: 1 ration per 10 hunters
+  const rationsConsumed = Math.floor(hunters / 10);
+  const currentRations = user.materials.get("rations") || 0;
+
+  // Check if user has enough rations
+  if (currentRations < rationsConsumed) {
+    return;
+  }
+
+  // Consume rations
+  user.materials.set("rations", currentRations - rationsConsumed);
+
+  // Set cooldown
+  user.cooldowns.hunter = new Date();
+
+  // Calculate rewards: base gold and XP scaled by hunter count
+  const goldReward = HUNT_GOLD_BASE * hunters;
+  const xpReward = HUNT_XP_BASE * hunters;
+
+  // Apply rewards
+  user.gold = (user.gold || 0) + goldReward;
+  user.statistics.hunts = (user.statistics.hunts || 0) + 1;
+
+  // Give XP to territory heroes (distribute among available heroes)
+  const territoryHeroes = user.heroes?.roster?.filter(h => h.type === "territory") || [];
+  if (territoryHeroes.length > 0) {
+    const xpPerHero = Math.floor(xpReward / territoryHeroes.length);
+    for (const hero of territoryHeroes) {
+      HeroManagementService.addXp(user, hero.id, xpPerHero);
+    }
+  }
+
+  console.log(`[hunt] User ${user.userId}: ${hunters} hunters consumed ${rationsConsumed} rations, reward: ${goldReward} gold, ${xpReward} XP`);
+}
+
+/**
  * Process exploration battles for a user's dispatched heroes
  * TURN-BASED: Execute ONE round per tick, tracking combat state
  */
 async function processExploration(user) {
-  // Defensive: ensure heroes.roster exists and is an array
-  if (!user.heroes?.roster || !Array.isArray(user.heroes.roster)) {
+  // Defensive: ensure heroes object and roster array exist
+  if (!user.heroes || !Array.isArray(user.heroes.roster)) {
     console.error(`[exploration] User ${user.userId} has no heroes.roster (heroes=${JSON.stringify(user.heroes)}), skipping`);
     return;
   }
@@ -98,14 +198,15 @@ async function processExploration(user) {
     return;
   }
 
-  // Check dispatch cooldown only for NEW combat starts (3 seconds for testing)
+  // Check dispatch cooldown only for NEW combat starts
   // Skip this check if we already have an explorationState (continuing combat)
   if (!user.explorationState) {
     const dispatchCooldown = user.cooldowns?.dispatch;
     if (dispatchCooldown) {
       const cooldownElapsed = Date.now() - new Date(dispatchCooldown).getTime();
-      if (cooldownElapsed < 3000) {
-        console.log(`[exploration] Cooldown active for new combat, skipping. elapsed:${cooldownElapsed}ms`);
+      const cooldownRequired = DISPATCH_COOLDOWN[heroSubZone] ?? DISPATCH_COOLDOWN[2]; // default to normal
+      if (cooldownElapsed < cooldownRequired) {
+        console.log(`[exploration] Cooldown active (subZone:${heroSubZone}), skipping. elapsed:${cooldownElapsed}ms required:${cooldownRequired}ms`);
         return;
       }
     }
@@ -222,9 +323,30 @@ async function processExploration(user) {
     // Give rewards
     if (victory) {
       user.gold = (user.gold || 0) + state.goldReward;
+      user.statistics.goldFromExploration += state.goldReward;
       state.logMessages.push(`戰鬥勝利！獲得 ${state.goldReward} 黃金`);
     } else {
       state.logMessages.push(heroesDefeated ? '英雄全滅！' : '戰鬥超时！');
+    }
+
+    // Update statistics
+    user.statistics.explorations++;
+    if (victory) {
+      user.statistics.wins++;
+      // Track zones explored
+      const zone = state.zone;
+      const currentCount = user.statistics.zonesExplored.get(zone) || 0;
+      user.statistics.zonesExplored.set(zone, currentCount + 1);
+      // Track boss defeat
+      if (subZoneData.is_boss) {
+        user.statistics.bossesDefeated++;
+      }
+
+      // Auto-update guild task progress for exploration victory
+      updateTaskProgress(user, "explore", 1, { zone: state.zone });
+      updateTaskProgress(user, "kill", state.heroes.length, { zone: state.zone });
+    } else {
+      user.statistics.losses++;
     }
 
     // Add battle log
@@ -274,18 +396,25 @@ async function processAllUsers() {
       await user.processIdleTick();
       console.log(`[tick] Idle tick done for ${user.userId}, gold=${user.gold}, monumentLevel=${user.buildings?.monument?.level}`);
 
-      // 2. Process exploration battles
+      // 2. Process hunger/thirst decay for all territory heroes
+      await processHungerThirst(user);
+
+      // 3. Process army hunts
+      await processHunts(user);
+
+      // 4. Process exploration battles
       await processExploration(user);
 
-      // 3. Wandering hero spawning (30% chance per user per tick if under cap)
+      // 5. Wandering hero spawning (30% chance per user per tick if under cap)
       const canSpawnWandering =
+        user.heroes &&
         user.heroes.usedWanderingSlots < user.wanderingHeroCap;
       if (canSpawnWandering && Math.random() < WANDERING_SPAWN_CHANCE) {
         HeroManagementService.createWanderingHero(user);
         await user.save();
       }
 
-      // 4. Broadcast update to connected clients (full snapshot matching /api/user response)
+      // 6. Broadcast update to connected clients (full snapshot matching /api/user response)
       const userData = {
         userId: user.userId,
         username: user.username,
