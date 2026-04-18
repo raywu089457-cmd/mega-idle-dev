@@ -3,6 +3,11 @@ import { connectDB } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
 import { UserRepository } from "@/lib/repositories/UserRepository";
 import { broadcast } from "@/lib/broadcast";
+import {
+  getProductionRates,
+  getTavernProduction,
+  getPotionShopProduction,
+} from "@/lib/game/formulas";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -12,7 +17,7 @@ export async function GET() {
 
   await connectDB();
 
-  let user = await UserRepository.findByIdActive(session.user.id);
+  const user = await UserRepository.findByIdActive(session.user.id);
 
   if (!user) {
     return Response.json(
@@ -20,6 +25,33 @@ export async function GET() {
       { status: 401 }
     );
   }
+
+  // Calculate production rates per tick (for UI display)
+  const monumentLevel = user.buildings?.monument?.level || 0;
+  const lumberMillLevel = user.buildings?.lumberMill?.level || 0;
+  const mineLevel = user.buildings?.mine?.level || 0;
+  const herbGardenLevel = user.buildings?.herbGarden?.level || 0;
+  const tavernLevel = user.buildings?.tavern?.level || 0;
+  const potionShopLevel = user.buildings?.potionShop?.level || 0;
+
+  // Monument production rates per tick (uses centralized formula)
+  const monumentRates = getProductionRates(
+    monumentLevel,
+    lumberMillLevel,
+    mineLevel,
+    herbGardenLevel
+  );
+
+  const tavernProd = getTavernProduction(
+    tavernLevel,
+    user.materials.get("fruit") || 0,
+    user.materials.get("water") || 0
+  );
+
+  const potionShopProd = getPotionShopProduction(
+    potionShopLevel,
+    user.materials.get("herbs") || 0
+  );
 
   const snapshot = {
     userId: user.userId,
@@ -60,11 +92,10 @@ export async function GET() {
       potions: Object.fromEntries(user.inventory?.potions || new Map()),
     },
     productionRates: {
-      fruit: 5 * (1 + (user.buildings?.lumberMill?.level || 0) * 0.5) * (1 + (user.buildings?.monument?.level || 0) * 0.12),
-      water: 5 * (1 + (user.buildings?.monument?.level || 0) * 0.12),
-      wood: 5 * (1 + (user.buildings?.lumberMill?.level || 0) * 0.5) * (1 + (user.buildings?.monument?.level || 0) * 0.12),
-      iron: 5 * (1 + (user.buildings?.mine?.level || 0) * 0.5) * (1 + (user.buildings?.monument?.level || 0) * 0.12),
-      herbs: 5 * (1 + (user.buildings?.herbGarden?.level || 0) * 0.5) * (1 + (user.buildings?.monument?.level || 0) * 0.12),
+      ...monumentRates,
+      rations: tavernProd ? tavernProd.produced.rations : 0,
+      drinking_water: tavernProd ? tavernProd.produced.drinking_water : 0,
+      potions: potionShopProd ? potionShopProd.produced.potions : 0,
     },
   };
 

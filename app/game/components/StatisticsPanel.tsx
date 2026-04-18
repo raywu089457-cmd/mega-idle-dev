@@ -9,6 +9,11 @@ interface Props {
 
 export default function StatisticsPanel({ data }: Props) {
   const stats = data.statistics || {};
+  const totalBattles = (stats.wins || 0) + (stats.losses || 0);
+  const winRate = totalBattles > 0 ? Math.round((stats.wins || 0) / totalBattles * 100) : 0;
+  const maxConsecutiveDays = Math.max(stats.dailyClaims || 0, stats.consecutiveDays || 0);
+  const dayProgress = maxConsecutiveDays > 0 ? Math.min(100, (stats.consecutiveDays || 0) / Math.max(maxConsecutiveDays, 1) * 100) : 0;
+
   const statGroups = [
     {
       title: "戰鬥統計",
@@ -18,6 +23,10 @@ export default function StatisticsPanel({ data }: Props) {
         { label: "敗北次數", value: stats.losses || 0 },
         { label: "世界Boss擊敗", value: stats.bossesDefeated || 0 },
       ],
+      visualization: {
+        type: "winrate",
+        data: { wins: stats.wins || 0, losses: stats.losses || 0, winRate }
+      },
     },
     {
       title: "資源統計",
@@ -51,8 +60,48 @@ export default function StatisticsPanel({ data }: Props) {
         { label: "連續天數", value: stats.consecutiveDays || 0 },
         { label: "連續週數", value: stats.consecutiveWeeks || 0 },
       ],
+      visualization: {
+        type: "progress",
+        data: { label: "登入進度", current: stats.consecutiveDays || 0, max: 7, unit: "天" }
+      },
     },
   ];
+
+  function renderVisualization(group: typeof statGroups[0]) {
+    if (!group.visualization) return null;
+
+    if (group.visualization.type === "winrate") {
+      const data = group.visualization.data as { wins: number; losses: number; winRate: number };
+      return (
+        <div className="stat-visualization">
+          <div className="winrate-bar">
+            <div className="winrate-fill win" style={{ width: `${data.winRate}%` }} />
+            <div className="winrate-fill loss" style={{ width: `${100 - data.winRate}%` }} />
+          </div>
+          <div className="winrate-label">
+            <span className="win-text">⚔️ {data.wins}勝</span>
+            <span className="rate-text">{data.winRate}%</span>
+            <span className="loss-text">{data.losses}敗</span>
+          </div>
+        </div>
+      );
+    }
+
+    if (group.visualization.type === "progress") {
+      const data = group.visualization.data as { label: string; current: number; max: number; unit: string };
+      const progress = Math.min(100, (data.current / data.max) * 100);
+      return (
+        <div className="stat-visualization">
+          <div className="progress-bar">
+            <div className="progress-fill" style={{ width: `${progress}%` }} />
+          </div>
+          <div className="progress-label">{data.label}: {data.current}/{data.max}{data.unit}</div>
+        </div>
+      );
+    }
+
+    return null;
+  }
 
   return (
     <div className="panel">
@@ -70,6 +119,7 @@ export default function StatisticsPanel({ data }: Props) {
                 </div>
               ))}
             </div>
+            {renderVisualization(group)}
           </div>
         ))}
       </div>

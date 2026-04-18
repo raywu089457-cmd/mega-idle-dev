@@ -22,8 +22,8 @@ export const FeatureFlags = {
   team:      true,   // 隊伍編組
   guild:     true,   // 公會任務
   worldBoss: true,   // 世界 BOSS
-  army:      false,  // 軍隊系統（開發中）
-  crafting:  false,  // 合成系統（開發中）
+  army:      true,   // 軍隊系統
+  crafting:  true,   // 合成系統
 
   // ── 輔助系統 ─────────────────────────────────────────
   logs:      true,   // 戰鬥紀錄查詢

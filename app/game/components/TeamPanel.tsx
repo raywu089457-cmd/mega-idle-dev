@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { GameData, Hero, useGameData } from "../hooks/useGameData";
 
+const RARITY_COLOR: Record<string, string> = { S: "#ff6b6b", A: "#ffa500", B: "#ffd700", C: "#4ade80", D: "#60a5fa", E: "#a78bfa", F: "#9ca3af" };
+
 interface Props {
   data: GameData;
   api: ReturnType<typeof useGameData>["api"];
@@ -69,7 +71,10 @@ export default function TeamPanel({ data, api }: Props) {
             <div className="team-members">
               {getTeamHeroes(i).map((h) => (
                 <div key={h.id} className="team-member">
-                  <span>{h.name}</span>
+                  <span className="team-member-name" style={{ color: RARITY_COLOR[h.rarity || "D"] }}>
+                    {h.name}
+                  </span>
+                  <span className="team-member-info">Lv.{h.level} ⚔️{h.atk} 🛡️{h.def}</span>
                   <button className="btn-remove" onClick={() => removeFromTeam(h.id, i)}>×</button>
                 </div>
               ))}
@@ -94,11 +99,18 @@ export default function TeamPanel({ data, api }: Props) {
               key={h.id}
               className={`hero-chip-btn ${selectedHero === h.id ? "selected" : ""}`}
               onClick={() => setSelectedHero(selectedHero === h.id ? null : h.id)}
+              style={{ borderColor: RARITY_COLOR[h.rarity || "D"] }}
             >
-              {h.name} Lv.{h.level}
+              <span style={{ color: RARITY_COLOR[h.rarity || "D"] }}>{h.name}</span> Lv.{h.level}
             </button>
           ))}
-          {idleHeroes.length === 0 && <p className="empty">沒有待命英雄</p>}
+          {idleHeroes.length === 0 && (
+          <p className="empty">
+            {data.heroes.roster.filter((h: Hero) => h.type === "territory").length === 0
+              ? "沒有可分配的英雄 — 需先招募領地英雄"
+              : "所有英雄都在探索中或已分配 — 召回或等待"}
+          </p>
+        )}
         </div>
       </div>
 

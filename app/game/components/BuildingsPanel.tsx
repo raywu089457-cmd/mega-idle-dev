@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { GameData, useGameData } from "../hooks/useGameData";
 import { RESOURCE_NAMES, BUILDING_NAMES } from "../lib/localization";
+import { getBuildingCost } from "@/lib/game/formulas/buildingCosts";
 
 interface Props {
   data: GameData;
@@ -22,27 +23,49 @@ export default function BuildingsPanel({ data, api }: Props) {
   const [showBuildNew, setShowBuildNew] = useState(false);
 
   function getCost(bld: string, level: number) {
-    const l = level + 1;
-    const costs: Record<string, { gold: number; wood?: number; iron?: number; herbs?: number }> = {
-      castle: { gold: 100 * l * l },
-      tavern: { gold: 50 * l * l, wood: 20 * l },
-      monument: { gold: 80 * l * l },
-      warehouse: { gold: 30 * l * l, wood: 15 * l },
-      guildHall: { gold: 100 * l * l, wood: 30 * l, iron: 10 * l },
-      weaponShop: { gold: 40 * l * l },
-      armorShop: { gold: 40 * l * l },
-      potionShop: { gold: 40 * l * l },
-      lumberMill: { gold: 60 * l * l, wood: 20 * l },
-      mine: { gold: 60 * l * l, iron: 20 * l },
-      herbGarden: { gold: 60 * l * l, herbs: 20 * l },
-      barracks: { gold: 100 * l * l, wood: 30 * l, iron: 10 * l },
-    };
-    return costs[bld] || { gold: 50 * l * l };
+    // Use centralized formula - target level is level + 1
+    return getBuildingCost(bld, level + 1);
+  }
+
+  function getUpgradeEffect(bld: string, currentLevel: number): string {
+    // Calculate the effect of upgrading from currentLevel to currentLevel + 1
+    const nextLevel = currentLevel + 1;
+    switch (bld) {
+      case "castle":
+        return `英雄欄位 ${currentLevel} → ${nextLevel}`;
+      case "tavern":
+        return `口糧產量 +${nextLevel * 3}`;
+      case "monument":
+        return `基礎產量 ×${(1 + nextLevel * 0.12).toFixed(2)}`;
+      case "warehouse":
+        return `資源容量 +${nextLevel * 1000}`;
+      case "lumberMill":
+        return `木材產量 ×${(1 + nextLevel * 0.5).toFixed(1)}`;
+      case "mine":
+        return `礦石產量 ×${(1 + nextLevel * 0.5).toFixed(1)}`;
+      case "herbGarden":
+        return `草藥產量 ×${(1 + nextLevel * 0.5).toFixed(1)}`;
+      case "weaponShop":
+      case "armorShop":
+      case "potionShop":
+        return `產出效率 +${nextLevel * 10}%`;
+      case "guildHall":
+        return `公會等級 ${nextLevel}`;
+      case "barracks":
+        return `步兵訓練速度 +${nextLevel * 15}%`;
+      case "archery":
+        return `弓箭訓練速度 +${nextLevel * 15}%`;
+      default:
+        return `升級效果 +${nextLevel * 10}%`;
+    }
   }
 
   async function upgrade(bld: string) {
     const cost = getCost(bld, data.buildings[bld]?.level || 0);
     if (data.gold < cost.gold) { setMsg("黃金不足"); return; }
+    if (cost.wood && data.materials.wood < cost.wood) { setMsg("木材不足"); return; }
+    if (cost.iron && data.materials.iron < cost.iron) { setMsg("礦石不足"); return; }
+    if (cost.herbs && data.materials.herbs < cost.herbs) { setMsg("草藥不足"); return; }
     setUpgrading(true);
     setMsg(null);
     try {
@@ -85,12 +108,17 @@ export default function BuildingsPanel({ data, api }: Props) {
       <div className="buildings-list">
         {Object.entries(data.buildings).map(([k, b]) => {
           const cost = getCost(k, b.level);
-          const canAfford = data.gold >= cost.gold;
+          const hasGold = data.gold >= cost.gold;
+          const hasWood = !cost.wood || data.materials.wood >= cost.wood;
+          const hasIron = !cost.iron || data.materials.iron >= cost.iron;
+          const hasHerbs = !cost.herbs || data.materials.herbs >= cost.herbs;
+          const canAfford = hasGold && hasWood && hasIron && hasHerbs;
+          const effect = getUpgradeEffect(k, b.level);
           return (
             <div key={k} className="bld-row">
               <div className="bld-info">
                 <span className="bld-name">{getBuildingName(k)}</span>
-                <span className="bld-desc">{getBuildingDesc(k)}</span>
+                <span className="bld-desc">{effect}</span>
               </div>
               <div className="bld-right">
                 <span className="bld-lv">Lv.{b.level}</span>
@@ -98,8 +126,9 @@ export default function BuildingsPanel({ data, api }: Props) {
                   className="btn-sm"
                   onClick={() => upgrade(k)}
                   disabled={upgrading || !canAfford}
+                  title={!canAfford ? `需要: 💰${cost.gold}${cost.wood ? ` 🪵${cost.wood}` : ""}${cost.iron ? ` ⛓️${cost.iron}` : ""}${cost.herbs ? ` 🌿${cost.herbs}` : ""}` : `升級: ${effect}`}
                 >
-                  升級 💰{cost.gold}
+                  升級 💰{cost.gold}{cost.wood && <span className={hasWood ? "" : "insufficient"}> 🪵{cost.wood}</span>}{cost.iron && <span className={hasIron ? "" : "insufficient"}> ⛓️{cost.iron}</span>}{cost.herbs && <span className={hasHerbs ? "" : "insufficient"}> 🌿{cost.herbs}</span>}
                 </button>
               </div>
             </div>

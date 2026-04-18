@@ -20,6 +20,16 @@ export const DispatchSchema = z.object({
   heroIds: z.array(z.string()).min(1, "缺少 heroIds"),
   zone: z.number().int().min(1).max(10),
   subZone: z.number().int().min(1).max(3),
+  difficulty: z.number().int().min(1).max(3).optional(), // 1=easy, 2=normal, 3=hard (maps to subZone)
+  action: z.enum(["dispatch", "recall"]).optional(),
+});
+
+// Team dispatch schema - dispatches an entire team (0-4) to explore
+export const TeamDispatchSchema = z.object({
+  teamIdx: z.number().int().min(0).max(4),
+  zone: z.number().int().min(1).max(10),
+  subZone: z.number().int().min(1).max(3),
+  difficulty: z.number().int().min(1).max(3).optional(), // 1=easy, 2=normal, 3=hard (maps to subZone)
   action: z.enum(["dispatch", "recall"]).optional(),
 });
 

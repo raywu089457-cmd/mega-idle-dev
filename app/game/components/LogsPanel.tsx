@@ -22,12 +22,17 @@ interface Props {
 export default function LogsPanel({ logs }: Props) {
   const [filter, setFilter] = useState<"all" | "worldboss" | "exploration">("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [showCount, setShowCount] = useState(20);
+  const PAGE_SIZE = 20;
 
   const filtered = logs.filter((l: BattleLog) => {
     if (filter === "all") return true;
     if (filter === "worldboss") return l.category === "worldboss";
     return l.category === "solo_combat" || l.category === "team_combat";
   });
+
+  const displayed = filtered.slice(0, showCount);
+  const hasMore = filtered.length > showCount;
 
   function time(ts: number) {
     const d = new Date(ts);
@@ -48,7 +53,7 @@ export default function LogsPanel({ logs }: Props) {
       </div>
 
       <div className="logs-list">
-        {filtered.slice(0, 30).map((l: BattleLog) => (
+        {displayed.map((l: BattleLog) => (
           <div key={l.id}>
             <div
               className={`log-row ${l.victory ? "victory" : "defeat"} ${l.logMessages?.length ? "expandable" : ""}`}
@@ -72,6 +77,14 @@ export default function LogsPanel({ logs }: Props) {
         ))}
         {filtered.length === 0 && <p className="empty">沒有戰報</p>}
       </div>
+
+      {hasMore && (
+        <div className="load-more">
+          <button className="btn-secondary" onClick={() => setShowCount(c => c + PAGE_SIZE)}>
+            載入更多 ({displayed.length}/{filtered.length})
+          </button>
+        </div>
+      )}
     </div>
   );
 }

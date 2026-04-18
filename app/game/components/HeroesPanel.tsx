@@ -129,23 +129,85 @@ function HeroDetail({ hero, data, api, onClose }: HeroDetailProps) {
 
         {/* Action Buttons */}
         <div className="action-buttons">
+          {/* Priority 1: Immediate needs (if hero needs attention) */}
+          {needsAttention && (
+            <div className="action-row priority-row">
+              {hero.hunger < 30 && (
+                <button
+                  onClick={() => doAction("feed")}
+                  disabled={action !== null || !canFeed}
+                  className="btn-warning"
+                  title={canFeed ? "🍖 恢復飢餓 +30" : "需要口糧"}
+                >
+                  {canFeed ? "🍖 餵食" : "🍖 需要口糧"}
+                </button>
+              )}
+              {hero.thirst < 30 && (
+                <button
+                  onClick={() => doAction("water")}
+                  disabled={action !== null || !canWater}
+                  className="btn-warning"
+                  title={canWater ? "💧 恢復口渴 +30" : "需要飲用水"}
+                >
+                  {canWater ? "💧 給水" : "💧 需要飲用水"}
+                </button>
+              )}
+              {hero.currentHp < hero.maxHp && (
+                <button
+                  onClick={() => doAction("potion")}
+                  disabled={action !== null || !canPotion}
+                  className="btn-warning"
+                  title={canPotion ? "🧪 恢復 50% HP" : "需要藥水"}
+                >
+                  {canPotion ? "🧪 使用藥水" : "🧪 需要藥水"}
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Priority 2: Training */}
           {hero.type === "territory" && (
-            <button onClick={() => doAction("train")} disabled={action !== null || trainingCost > data.gold || hero.level >= 10} title="訓練英雄花費 💰{trainingCost}">
-              訓練 💰{trainingCost}
+            <button
+              onClick={() => doAction("train")}
+              disabled={action !== null || trainingCost > data.gold || hero.level >= 100}
+              className="btn-primary"
+              title={hero.level >= 100 ? "已達最高等級" : `訓練花費 💰${trainingCost}`}
+            >
+              {hero.level >= 100 ? "⬆️ 等級已滿" : `⬆️ 訓練 💰${trainingCost}`}
             </button>
           )}
-          <button onClick={() => doAction("feed")} disabled={action !== null || !canFeed}>
-            餵食 (口糧)
-          </button>
-          <button onClick={() => doAction("water")} disabled={action !== null || !canWater}>
-            給水 (飲用水)
-          </button>
-          <button onClick={() => doAction("potion")} disabled={action !== null || !canPotion || hero.currentHp >= hero.maxHp}>
-            使用藥水
-          </button>
+
+          {/* Priority 3: Secondary actions (only show if no urgent needs) */}
+          {!needsAttention && (
+            <div className="action-row">
+              <button
+                onClick={() => doAction("feed")}
+                disabled={action !== null || !canFeed}
+                title={canFeed ? "🍖 恢復飢餓 +30" : "需要口糧"}
+              >
+                🍖 餵食
+              </button>
+              <button
+                onClick={() => doAction("water")}
+                disabled={action !== null || !canWater}
+                title={canWater ? "💧 恢復口渴 +30" : "需要飲用水"}
+              >
+                💧 給水
+              </button>
+              <button
+                onClick={() => doAction("potion")}
+                disabled={action !== null || !canPotion || hero.currentHp >= hero.maxHp}
+                title={hero.currentHp >= hero.maxHp ? "HP 已滿" : canPotion ? "🧪 恢復 50% HP" : "需要藥水"}
+              >
+                🧪 藥水
+              </button>
+            </div>
+          )}
+
+          {/* Danger zone */}
           {!hero.isExploring && hero.type === "territory" && (
             <button onClick={doExpel} disabled={action !== null} className="btn-danger">
-              {confirmExpel ? "確認驅逐?" : "驅逐英雄"}
+              {confirmExpel ? "⚠️ 確認驅逐?" : "🚪 驅逐"}
             </button>
           )}
         </div>
@@ -256,15 +318,19 @@ export default function HeroesPanel({ data, api }: Props) {
                 <span className="hero-name" style={{ color: RARITY_COLOR[h.rarity || "D"] }}>
                   {h.name}
                 </span>
+                {h.rarity && <span className="rarity-badge" style={{ background: RARITY_COLOR[h.rarity] }}>{h.rarity}</span>}
                 <span className="hero-lv">Lv.{h.level}</span>
                 {h.isExploring && <span className="badge">⚔️ 探索中</span>}
-                {needsAttention && <span className="badge warning">⚠️</span>}
+                {needsAttention && <span className="badge warning">⚠️ 需要注意</span>}
               </div>
               <div className="hero-stats">
-                ⚔️{h.atk} 🛡️{h.def} HP:{h.currentHp}/{h.maxHp}
+                ⚔️{h.atk} 🛡️{h.def} ❤️{h.currentHp}/{h.maxHp}
+                {h.profession && <span className="hero-profession">{h.profession}</span>}
               </div>
               <div className="hero-needs">
-                🍖{Math.round(h.hunger)} 💧{Math.round(h.thirst)}
+                🍖{Math.round(h.hunger)}/100 💧{Math.round(h.thirst)}/100
+                {h.hunger < 30 && <span className="needs-badge">飢餓</span>}
+                {h.thirst < 30 && <span className="needs-badge">口渴</span>}
               </div>
               {/* Mini XP bar */}
               <div className="mini-xp-bar">
@@ -273,7 +339,13 @@ export default function HeroesPanel({ data, api }: Props) {
             </div>
           );
         })}
-        {heroes.length === 0 && <p className="empty">還沒有{getLabel(tab)}英雄</p>}
+        {heroes.length === 0 && (
+          <p className="empty">
+            {tab === "territory"
+              ? "還沒有領地英雄 — 建造酒館招募流浪英雄"
+              : "酒館還沒有流浪英雄 — 等待或升級酒館"}
+          </p>
+        )}
       </div>
 
       <div className="panel-footer">

@@ -27,7 +27,7 @@ export async function POST(request: Request) {
         error: parsed.error.issues.map((e: { message: string }) => e.message).join(", ")
       }, { status: 400 });
     }
-    const { heroIds, zone, subZone, action } = parsed.data;
+    const { heroIds, zone, subZone, difficulty, action } = parsed.data;
 
     // Handle recall action
     if (action === "recall") {
@@ -90,12 +90,20 @@ export async function POST(request: Request) {
 
     await user.save();
 
+    // If no heroes were dispatched, return error
+    if (dispatched.length === 0) {
+      return NextResponse.json({
+        success: false,
+        error: `派遣失敗: ${failed.join("; ")}`,
+      }, { status: 400 });
+    }
+
     return NextResponse.json({
       success: true,
       data: {
         dispatched,
-        failed,
-        message: dispatched.length > 0 ? `成功派遣 ${dispatched.length} 名英雄` : "派遣失敗",
+        failed: failed.length > 0 ? failed : undefined,
+        message: `成功派遣 ${dispatched.length} 名英雄`,
       },
     });
   } catch (error) {
