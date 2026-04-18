@@ -76,7 +76,8 @@ async function broadcast(userId, userData) {
  * If hunger or thirst < 30, hero is weakened (effectiveAtk/Def halved in combat)
  */
 async function processHungerThirst(user, tickCount) {
-  if (!user.heroes || !Array.isArray(user.heroes.roster)) {
+  // Defensive: ensure heroes.roster exists and is an array
+  if (!user.heroes?.roster || !Array.isArray(user.heroes.roster)) {
     return;
   }
 
@@ -173,8 +174,8 @@ async function processHunts(user) {
  */
 async function processExploration(user) {
   // Defensive: ensure heroes object and roster array exist
-  if (!user.heroes || !Array.isArray(user.heroes.roster)) {
-    console.error(`[exploration] User ${user.userId} has no heroes.roster (heroes=${JSON.stringify(user.heroes)}), skipping`);
+  if (!user.heroes?.roster || !Array.isArray(user.heroes.roster)) {
+    console.error(`[exploration] User ${user.userId} has no heroes.roster, skipping`);
     return;
   }
   const exploringHeroes = user.heroes.roster.filter(h => h.isExploring);
