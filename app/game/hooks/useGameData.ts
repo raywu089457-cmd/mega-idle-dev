@@ -145,12 +145,16 @@ export function useGameData() {
     es.addEventListener("user-update", (event) => {
       try {
         const update = JSON.parse(event.data);
+        console.log("[SSE] Received update:", JSON.stringify(update).slice(0, 200));
         // Only apply updates for this user
         if (update.userId === session.user.id) {
+          console.log("[SSE] Updating data, gold:", update.gold);
           setData(update);
+        } else {
+          console.log("[SSE] Mismatch - session user:", session.user.id, "update user:", update.userId);
         }
-      } catch {
-        // Invalid JSON, skip update
+      } catch (e) {
+        console.error("[SSE] Parse error:", e);
       }
     });
 
