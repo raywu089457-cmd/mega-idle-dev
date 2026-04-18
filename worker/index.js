@@ -86,7 +86,7 @@ async function processHungerThirst(user, tickCount) {
     return;
   }
 
-  const territoryHeroes = user.heroes.roster.filter(h => h.type === "territory");
+  const territoryHeroes = user.heroes?.roster?.filter(h => h.type === "territory") || [];
   if (territoryHeroes.length === 0) {
     return;
   }
@@ -178,7 +178,7 @@ async function processExploration(user) {
     console.error(`[exploration] User ${user.userId} has no heroes.roster, skipping`);
     return;
   }
-  const exploringHeroes = user.heroes.roster.filter(h => h.isExploring);
+  const exploringHeroes = user.heroes?.roster?.filter(h => h.isExploring) || [];
 
   if (exploringHeroes.length === 0) {
     // Clear orphaned exploration state
