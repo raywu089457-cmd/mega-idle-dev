@@ -489,23 +489,23 @@ userSchema.methods.buildStructure = function(type, cost) {
 // =============================================================================
 
 userSchema.methods.getHero = function(heroId) {
-  return this.heroes.roster.find(h => h.id === heroId);
+  return this.heroes?.roster?.find(h => h.id === heroId);
 };
 
 userSchema.methods.getTerritoryHeroes = function() {
-  return this.heroes.roster.filter(h => h.type === 'territory');
+  return this.heroes?.roster?.filter(h => h.type === 'territory') || [];
 };
 
 userSchema.methods.getWanderingHeroes = function() {
-  return this.heroes.roster.filter(h => h.type === 'wandering');
+  return this.heroes?.roster?.filter(h => h.type === 'wandering') || [];
 };
 
 userSchema.methods.getExploringHeroes = function() {
-  return this.heroes.roster.filter(h => h.isExploring);
+  return this.heroes?.roster?.filter(h => h.isExploring) || [];
 };
 
 userSchema.methods.getIdleHeroes = function() {
-  return this.heroes.roster.filter(h => !h.isExploring);
+  return this.heroes?.roster?.filter(h => !h.isExploring) || [];
 };
 
 userSchema.methods.addHero = function(heroData) {
@@ -541,6 +541,12 @@ userSchema.methods.addHero = function(heroData) {
     if (startingEquip.armor) hero.equipment.armor = startingEquip.armor;
   }
 
+  // Ensure roster exists before pushing
+  if (!this.heroes) {
+    this.heroes = { usedTerritorySlots: 0, usedWanderingSlots: 0, nextTerritoryNumber: 1, nextWanderingNumber: 1, roster: [] };
+  } else if (!this.heroes.roster) {
+    this.heroes.roster = [];
+  }
   this.heroes.roster.push(hero);
 
   if (hero.type === 'territory') {
@@ -562,7 +568,7 @@ userSchema.methods.removeHero = function(heroId) {
     this.heroes.usedWanderingSlots--;
   }
 
-  this.heroes.roster = this.heroes.roster.filter(h => h.id !== heroId);
+  this.heroes.roster = this.heroes?.roster?.filter(h => h.id !== heroId) || [];
   return hero;
 };
 
