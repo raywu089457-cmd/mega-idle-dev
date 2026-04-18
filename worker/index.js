@@ -384,7 +384,7 @@ async function processExploration(user) {
   await user.save();
 }
 
-async function processAllUsers() {
+async function processAllUsers(tickCount) {
   let users;
   try {
     users = await User.find({});
@@ -464,7 +464,7 @@ async function main() {
       tickCount++;
       console.log(`[tick] ${new Date().toISOString()} Tick #${tickCount} START`);
       try {
-        await processAllUsers();
+        await processAllUsers(tickCount);
       } catch (err) {
         console.error(`[tick] FATAL ERROR in tick #${tickCount}:`, err);
       }
