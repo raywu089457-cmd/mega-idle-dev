@@ -190,6 +190,7 @@ html, body {
   .desktop-header { display: none; }
   .game-shell { padding-bottom: 75px; }
 }
+  .loading-screen {
   position: fixed; inset: 0; z-index: 200;
   background: var(--bg);
   display: flex; flex-direction: column;
