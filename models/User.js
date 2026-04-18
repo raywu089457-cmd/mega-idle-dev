@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const { getGoldCapacity, getMaterialCapacity } = require("../lib/game/formulas/capacity");
 
 // =============================================================================
 // Hero Schema - Used within HeroManager
@@ -322,16 +321,16 @@ userSchema.index({ userId: 1, deletedAt: 1 });
 // Virtual Getters
 // =============================================================================
 
-// Gold capacity based on warehouse level — uses formula from lib/game/formulas/capacity
+// Gold capacity: 100000 + (warehouse_level * 50000)
 userSchema.virtual('goldCapacity').get(function() {
   const warehouseLevel = this.buildings?.warehouse?.level || 0;
-  return getGoldCapacity(warehouseLevel);
+  return 100000 + (warehouseLevel * 50000);
 });
 
-// Material capacity based on warehouse level — uses formula from lib/game/formulas/capacity
+// Material capacity: 500 + (warehouse_level * 100)
 userSchema.virtual('materialCapacity').get(function() {
   const warehouseLevel = this.buildings?.warehouse?.level || 0;
-  return getMaterialCapacity(warehouseLevel);
+  return 500 + (warehouseLevel * 100);
 });
 
 // Territory hero cap based on castle level (max 48 for 2 menu rows)
