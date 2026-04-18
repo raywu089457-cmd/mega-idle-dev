@@ -150,7 +150,9 @@ export function useGameData() {
     });
 
     es.onerror = () => {
-      // EventSource will auto-reconnect
+      // Close and null to trigger reconnect on next render
+      es.close();
+      eventSourceRef.current = null;
     };
 
     return () => {
@@ -158,6 +160,15 @@ export function useGameData() {
       eventSourceRef.current = null;
     };
   }, [session?.user?.id]);
+
+  // Fallback polling every 30 seconds to ensure data freshness
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    const interval = setInterval(() => {
+      fetchUser();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [session?.user?.id, fetchUser]);
 
   return { data, loading, error, fetchUser, api };
 }
