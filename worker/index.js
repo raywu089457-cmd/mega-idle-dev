@@ -72,11 +72,16 @@ async function broadcast(userId, userData) {
 
 /**
  * Process hunger/thirst decay for all territory heroes
- * Each tick: hunger -= 1, thirst -= 1 (minimum 0)
+ * Every 30 ticks: hunger -= 1, thirst -= 1 (minimum 0)
  * If hunger or thirst < 30, hero is weakened (effectiveAtk/Def halved in combat)
  */
-async function processHungerThirst(user) {
+async function processHungerThirst(user, tickCount) {
   if (!user.heroes || !Array.isArray(user.heroes.roster)) {
+    return;
+  }
+
+  // Only decay every 30 ticks (not every tick)
+  if (tickCount % 30 !== 0) {
     return;
   }
 
@@ -90,7 +95,7 @@ async function processHungerThirst(user) {
     if (hero.hunger === undefined) hero.hunger = 100;
     if (hero.thirst === undefined) hero.thirst = 100;
 
-    // Decay hunger and thirst by 1 each tick, minimum 0
+    // Decay hunger and thirst by 1 every 30 ticks, minimum 0
     const newHunger = Math.max(0, hero.hunger - 1);
     const newThirst = Math.max(0, hero.thirst - 1);
 
@@ -396,8 +401,8 @@ async function processAllUsers() {
       await user.processIdleTick();
       console.log(`[tick] Idle tick done for ${user.userId}, gold=${user.gold}, monumentLevel=${user.buildings?.monument?.level}`);
 
-      // 2. Process hunger/thirst decay for all territory heroes
-      await processHungerThirst(user);
+      // 2. Process hunger/thirst decay for all territory heroes (every 30 ticks)
+      await processHungerThirst(user, tickCount);
 
       // 3. Process army hunts
       await processHunts(user);
