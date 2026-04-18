@@ -261,6 +261,12 @@ async function processExploration(user) {
 
   // Continue existing exploration combat - execute ONE round
   const state = user.explorationState;
+  if (!state?.heroes) {
+    console.error(`[exploration] state.heroes is undefined, clearing orphaned state`);
+    user.explorationState = null;
+    await user.save();
+    return;
+  }
   state.round++;
   user.markModified('explorationState');
   console.log(`[exploration] Continuing round ${state.round} - enemyHP:${state.enemyCurrentHp}/${state.enemyMaxHp} heroes:${state.heroes.filter(h=>h.currentHp>0).length} alive`);
