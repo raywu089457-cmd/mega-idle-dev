@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { GameData, Hero, useGameData } from "../hooks/useGameData";
 import { getXpForLevel } from "@/lib/game/formulas/xp";
-import ITEMS from "@/lib/game/_CONSTS/items";
+import { ITEMS } from "@/lib/game/types/items";
 
 interface Props {
   data: GameData;
@@ -170,9 +170,8 @@ function HeroDetail({ hero, data, api, onClose }: HeroDetailProps) {
                   const slotKey = activeSlot as keyof typeof data.inventory;
                   const inv = data.inventory || {};
                   const slotItems = (inv as any)[slotKey === "weapon" ? "weapons" : slotKey === "armor" ? "armor" : slotKey === "helmet" ? "helmets" : "accessories"] || {};
-                  const availableItems = Object.entries(slotItems)
-                    .filter(([, count]) => (count as number) > 0)
-                    .map(([itemId, count]) => ({ itemId, count }))
+                  const availableItems: { itemId: string; count: number }[] = Object.entries(slotItems)
+                    .map(([itemId, count]) => ({ itemId, count: count as number }))
                     .filter(i => i.count > 0);
 
                   if (availableItems.length === 0) {
@@ -180,15 +179,15 @@ function HeroDetail({ hero, data, api, onClose }: HeroDetailProps) {
                   }
 
                   return availableItems.map(({ itemId, count }) => {
-                    const item = ITEMS[itemId];
+                    const item = ITEMS[itemId as keyof typeof ITEMS];
                     if (!item) return null;
                     return (
                       <div key={itemId} className="equip-list-item" onClick={() => doAction(`equip_${activeSlot}_${itemId}`)}>
                         <span className="item-name">{item.name}</span>
                         <span className="item-stats">
-                          {item.stats?.attack > 0 && <span className="stat-atk">⚔️+{item.stats.attack}</span>}
-                          {item.stats?.defense > 0 && <span className="stat-def">🛡️+{item.stats.defense}</span>}
-                          {item.stats?.hp !== undefined && item.stats.hp !== 0 && <span className="stat-hp">❤️+{item.stats.hp}</span>}
+                          {(item.stats?.attack ?? 0) > 0 && <span className="stat-atk">⚔️+{item.stats?.attack}</span>}
+                          {(item.stats?.defense ?? 0) > 0 && <span className="stat-def">🛡️+{item.stats?.defense}</span>}
+                          {(item.stats?.hp ?? 0) !== 0 && <span className="stat-hp">❤️+{item.stats?.hp}</span>}
                         </span>
                         <span className="item-count">x{count}</span>
                       </div>
