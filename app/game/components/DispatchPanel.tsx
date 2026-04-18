@@ -88,21 +88,37 @@ export default function DispatchPanel({ data, api }: Props) {
         </select></label>
       </div>
 
-      <div className="hero-select">
+      <div className="hero-select-grid">
         {idleHeroes.map((h: Hero) => (
-          <button
+          <div
             key={h.id}
-            className={`hero-chip-btn ${selected.includes(h.id) ? "selected" : ""} ${sending ? "sending" : ""}`}
+            className={`hero-box ${selected.includes(h.id) ? "selected" : ""} ${sending ? "sending" : ""}`}
             onClick={() => !sending && toggleHero(h.id)}
-            disabled={sending}
             style={{ borderColor: RARITY_COLOR[h.rarity || "D"] }}
           >
-            {sending && selected.includes(h.id) ? "派遣中..." : (
-              <>
-                <span style={{ color: RARITY_COLOR[h.rarity || "D"] }}>{h.name}</span> Lv.{h.level}
-              </>
+            <div className="hero-box-header">
+              <span className="hero-box-name" style={{ color: RARITY_COLOR[h.rarity || "D"] }}>{h.name}</span>
+              <span className="hero-box-level">Lv.{h.level}</span>
+            </div>
+            <div className="hero-box-rarity">
+              <span className="rarity-badge" style={{ background: RARITY_COLOR[h.rarity || "D"] }}>{h.rarity}</span>
+            </div>
+            <div className="hero-box-stats">
+              <span>⚔️ {h.atk}</span>
+              <span>🛡️ {h.def}</span>
+              <span>❤️ {h.currentHp}/{h.maxHp}</span>
+            </div>
+            <div className="hero-box-status">
+              {h.isExploring ? (
+                <span className="status-badge exploring">⚔️ 探索中</span>
+              ) : (
+                <span className="status-badge idle">🟢 待機</span>
+              )}
+            </div>
+            {sending && selected.includes(h.id) && (
+              <div className="hero-box-sending">派遣中...</div>
             )}
-          </button>
+          </div>
         ))}
         {idleHeroes.length === 0 && (
           <p className="empty">

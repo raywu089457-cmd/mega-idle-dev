@@ -348,6 +348,36 @@ html, body {
 
 .hero-select { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.5rem; }
 
+/* Hero Box Grid (DispatchPanel) */
+.hero-select-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.5rem; margin-top: 0.5rem; }
+.hero-box {
+  display: flex; flex-direction: column;
+  padding: 0.6rem; background: var(--surface2);
+  border: 2px solid var(--border); border-radius: 8px;
+  cursor: pointer; transition: all 0.15s;
+  position: relative;
+}
+.hero-box:hover { border-color: var(--accent); transform: translateY(-2px); }
+.hero-box.selected { border-color: var(--accent); background: var(--accent); color: white; }
+.hero-box.selected .hero-box-name,
+.hero-box.selected .hero-box-level,
+.hero-box.selected .hero-box-stats span { color: white; }
+.hero-box.selected .rarity-badge { opacity: 0.9; }
+.hero-box.selected .status-badge.idle { background: rgba(255,255,255,0.2); }
+.hero-box.selected .status-badge.exploring { background: rgba(255,255,255,0.3); }
+.hero-box.sending { opacity: 0.7; pointer-events: none; }
+.hero-box-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem; }
+.hero-box-name { font-size: 0.85rem; font-weight: 600; }
+.hero-box-level { font-size: 0.75rem; color: var(--text2); }
+.hero-box-rarity { margin-bottom: 0.3rem; }
+.hero-box-stats { display: flex; gap: 0.4rem; font-size: 0.75rem; color: var(--text2); margin-bottom: 0.3rem; }
+.hero-box-stats span { white-space: nowrap; }
+.hero-box-status { margin-top: auto; }
+.status-badge { display: inline-block; padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.7rem; font-weight: 600; }
+.status-badge.idle { background: rgba(74, 222, 128, 0.2); color: #4ade80; }
+.status-badge.exploring { background: rgba(255, 107, 107, 0.2); color: #ff6b6b; }
+.hero-box-sending { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); border-radius: 8px; font-size: 0.85rem; }
+
 /* Stats */
 .stats-list { font-size: 0.8rem; color: var(--text2); display: flex; flex-direction: column; gap: 0.4rem; }
 .hero-stat { font-size: 0.8rem; color: var(--text2); margin-bottom: 0.4rem; }
