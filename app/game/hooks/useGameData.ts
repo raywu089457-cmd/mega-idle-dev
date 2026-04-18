@@ -124,11 +124,16 @@ export function useGameData() {
     return json;
   }, [fetchUser]);
 
-  // SSE real-time updates - connect once with the user's session userId
+  // SSE real-time updates - reconnects automatically on disconnect
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (!session?.user?.id) return;
-    if (eventSourceRef.current) return; // Already connected
+
+    // Close existing connection if any
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+      eventSourceRef.current = null;
+    }
 
     const es = new EventSource("/api/events");
     eventSourceRef.current = es;
@@ -149,10 +154,9 @@ export function useGameData() {
       }
     });
 
-    es.onerror = () => {
-      // Close and null to trigger reconnect on next render
-      es.close();
-      eventSourceRef.current = null;
+    // EventSource has built-in reconnection, no need to manually close on error
+    es.onerror = (err) => {
+      console.log("SSE error, will auto-reconnect:", err);
     };
 
     return () => {
@@ -160,15 +164,6 @@ export function useGameData() {
       eventSourceRef.current = null;
     };
   }, [session?.user?.id]);
-
-  // Fallback polling every 30 seconds to ensure data freshness
-  useEffect(() => {
-    if (!session?.user?.id) return;
-    const interval = setInterval(() => {
-      fetchUser();
-    }, 30000);
-    return () => clearInterval(interval);
-  }, [session?.user?.id, fetchUser]);
 
   return { data, loading, error, fetchUser, api };
 }
