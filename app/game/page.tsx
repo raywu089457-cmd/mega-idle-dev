@@ -51,17 +51,12 @@ export default function GamePage() {
 
   return (
     <div className="game-shell">
-      <header className="game-header">
-        <h1>⚔️ Mega Idle</h1>
-        <div className="header-info">
-          <NotificationBell />
-          <span className="gold">💰 {data.gold.toLocaleString()}</span>
-          <span className="stones">💎 {data.magicStones}</span>
-          <span className="username">{data.username}</span>
-        </div>
-      </header>
-
       <Navigation active={tab} onChange={setTab} />
+      <div className="header-resources mobile-only">
+        <span className="gold">💰 {data.gold.toLocaleString()}</span>
+        <span className="stones">💎 {data.magicStones}</span>
+        <span className="username">{data.username}</span>
+      </div>
 
       <main className="game-content">
         {tab === "home" && <HomePanel data={data} />}
