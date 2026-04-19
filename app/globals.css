@@ -455,13 +455,15 @@ html, body {
 .bld-lv { font-size: 16px; font-weight: 700; color: var(--hp); font-family: 'Microsoft JhengHei UI', system-ui, sans-serif; line-height: 20px; display: flex; align-items: center; }
 .buildings-list { display: flex; flex-direction: column; gap: 0.5rem; }
 .bld-row {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 8px 12px; background: #1A1A25; border-radius: 8px;
+  display: flex; flex-direction: row; align-items: center;
+  padding: 8px 12px 8px 954px;
+  background: #1A1A25; border-radius: 8px;
+  align-self: stretch;
 }
 .bld-info { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 78px; }
 .bld-info .bld-name { font-size: 13.6px; color: var(--text); font-weight: 700; font-family: 'Microsoft JhengHei UI', system-ui, sans-serif; text-align: center; line-height: 17px; }
 .bld-info .bld-desc { font-size: 11.2px; color: var(--text3); margin-top: 1.6px; font-family: 'Microsoft JhengHei UI', system-ui, sans-serif; text-align: center; line-height: 14px; }
-.bld-right { display: flex; align-items: center; gap: 0.5rem; }
+.bld-right { display: flex; flex-direction: row; align-items: center; padding: 0px; gap: 8px; justify-content: flex-end; }
 
 /* Resources */
 .resource-row { display: flex; gap: 1.5rem; margin-bottom: 1rem; font-size: 1rem; }
