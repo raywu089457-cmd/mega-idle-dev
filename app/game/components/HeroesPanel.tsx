@@ -11,6 +11,7 @@ interface Props {
 }
 
 const RARITY_COLOR: Record<string, string> = { S: "#ff6b6b", A: "#ffa500", B: "#ffd700", C: "#4ade80", D: "#60a5fa", E: "#a78bfa", F: "#9ca3af" };
+const RARITY_NAME: Record<string, string> = { S: "S", A: "A", B: "B", C: "C", D: "D", E: "E", F: "F" };
 const PROFESSION_MAP: Record<string, string> = { melee: "近戰", ranged: "遠程", mage: "法師", healer: "補師", tank: "坦克", assassin: "刺客" };
 const SLOT_NAMES = ["weapon", "armor", "helmet", "accessory"] as const;
 const SLOT_ICONS: Record<string, string> = { weapon: "⚔️", armor: "🛡️", helmet: "⛑️", accessory: "💍" };
@@ -400,10 +401,10 @@ export default function HeroesPanel({ data, api }: Props) {
               onClick={handleClick}
             >
               <div className="hero-card-name">
-                <span className="hero-name" style={{ color: RARITY_COLOR[h.rarity || "D"] }}>
-                  {h.name}
-                </span>
-                {h.profession && <span className="hero-profession-tag">[{PROFESSION_MAP[h.profession] || h.profession}]</span>}
+                <span className="hero-rarity" style={{ color: RARITY_COLOR[h.rarity || "D"] }}>[{RARITY_NAME[h.rarity || "D"]}]</span>
+                <span className="hero-name" style={{ color: RARITY_COLOR[h.rarity || "D"] }}>{h.name}</span>
+                <span className="hero-lv">Lv.{h.level}</span>
+                {h.profession && <span className="hero-profession-tag">{PROFESSION_MAP[h.profession] || h.profession}</span>}
               </div>
               <div className="hero-card-hp">
                 <span className="hp-label">❤️</span>

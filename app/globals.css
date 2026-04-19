@@ -411,7 +411,9 @@ html, body {
 .hero-card.selected { border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold); }
 .hero-card-name { font-size: 0.95rem; font-weight: 700; display: flex; justify-content: center; align-items: center; gap: 0.3rem; flex-wrap: wrap; }
 .hero-card-name .hero-name { font-size: 1rem; }
+.hero-rarity { font-size: 0.85rem; font-weight: 700; }
 .hero-profession-tag { font-size: 0.75rem; color: var(--text2); font-weight: 400; }
+.hero-card-name .hero-lv { font-size: 0.75rem; color: var(--text2); font-weight: 400; }
 .hero-card-hp { display: flex; align-items: center; gap: 0.4rem; margin-top: 0.2rem; }
 .hp-label { font-size: 0.85rem; }
 .hp-bar-gradient { flex: 1; height: 8px; background: var(--surface); border-radius: 4px; overflow: hidden; }
@@ -619,10 +621,11 @@ html, body {
   .rarity-badge { font-size: 0.7rem; padding: 0.15rem 0.4rem; margin-left: 0.2rem; }
 
   /* Hero card - ensure XP bar shows on mobile */
-  .hero-card { overflow: visible; min-height: 140px; }
-  .mini-xp-row { margin-top: 0.5rem; display: flex !important; }
+  .hero-card { overflow: visible; min-height: 130px; }
+  .hero-card-name { flex-wrap: wrap; gap: 4px; }
+  .mini-xp-row { margin-top: 0.5rem; display: flex !important; width: 100%; }
   .mini-xp-label { min-width: 28px; font-size: 11px; }
-  .mini-xp-bar { height: 4px; display: block; }
+  .mini-xp-bar { height: 4px; display: block; flex: 1; max-width: 100px; }
 
   /* Buttons - larger touch targets */
   .btn-primary, .btn-secondary, .btn-danger {
