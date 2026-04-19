@@ -107,7 +107,7 @@ function HeroDetail({ hero, data, api, onClose }: HeroDetailProps) {
 
         {/* XP Progress Bar */}
         <div className="stat-row">
-          <span>經驗:</span>
+          <span className="xp-label">EXP</span>
           <div className="xp-bar">
             <div className="xp-fill" style={{ width: `${Math.min(100, xpProgress * 100)}%` }} />
           </div>

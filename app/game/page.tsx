@@ -66,6 +66,8 @@ export default function GamePage() {
         gold={data.gold}
         goldCapacity={data.goldCapacity}
         username={data.username}
+        materials={data.materials}
+        materialCapacity={data.materialCapacity}
       />
       <div className="header-resources mobile-only">
         <span className="gold">💰 {data.gold.toLocaleString()}</span>

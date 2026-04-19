@@ -29,9 +29,16 @@ interface Props {
   gold?: number;
   goldCapacity?: number;
   username?: string;
+  materials?: Record<string, number>;
+  materialCapacity?: number;
 }
 
-export default function Navigation({ active, onChange, gold, goldCapacity, username }: Props) {
+const MAT_ICONS: Record<string, string> = {
+  fruit: "🍎", water: "💧", wood: "🪵", iron: "⛓️",
+  herbs: "🌿", magicStones: "💎", magic_stone: "💎", rations: "🍖", drinking_water: "🥤", potions: "🧪",
+};
+
+export default function Navigation({ active, onChange, gold, goldCapacity, username, materials, materialCapacity }: Props) {
   const [showMore, setShowMore] = useState(false);
 
   return (
@@ -56,6 +63,13 @@ export default function Navigation({ active, onChange, gold, goldCapacity, usern
         <div className="header-user-info">
           <span className="gold">💰 {gold?.toLocaleString() || 0} / {goldCapacity?.toLocaleString() || 0}</span>
           <span className="username">{username}</span>
+          <div className="header-materials">
+            {materials && Object.entries(materials).map(([k, v]) => (
+              <span key={k} className="header-mat-item">
+                {MAT_ICONS[k] || "📦"} {Number(v).toLocaleString()}
+              </span>
+            ))}
+          </div>
         </div>
       </header>
 
