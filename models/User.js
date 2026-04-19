@@ -607,60 +607,62 @@ userSchema.methods.processIdleTick = function() {
 
   if (ticksToApply <= 0) return this;
 
-  // 1. Monument Production - produces raw materials
-  // Generous base production for casual players — satisfying idle gains
+  // Import production formulas (deferred to avoid circular deps)
+  const {
+    getMonumentProduction,
+    getTavernProduction,
+    getPotionShopProduction,
+  } = require("../lib/game/formulas/production");
+
+  // 1. Monument Production - produces raw materials using centralized formulas
   const monumentLevel = this.buildings?.monument?.level || 0;
   if (monumentLevel > 0) {
-    const baseProduction = 5; // Good idle income
-    const monumentBonus = 1 + (monumentLevel * 0.12);
+    const monumentProd = getMonumentProduction(
+      monumentLevel,
+      this.buildings?.lumberMill?.level || 0,
+      this.buildings?.mine?.level || 0,
+      this.buildings?.herbGarden?.level || 0,
+      ticksToApply
+    );
 
-    const materialsToProduce = ['fruit', 'water', 'wood', 'iron', 'herbs'];
-    const bonuses = {
-      fruit: monumentBonus,
-      water: monumentBonus,
-      wood: monumentBonus * (1 + (this.buildings?.lumberMill?.level || 0) * 0.5),
-      iron: monumentBonus * (1 + (this.buildings?.mine?.level || 0) * 0.5),
-      herbs: monumentBonus * (1 + (this.buildings?.herbGarden?.level || 0) * 0.5),
-    };
-
-    materialsToProduce.forEach(mat => {
-      const produced = Math.floor(baseProduction * ticksToApply * (bonuses[mat] || monumentBonus));
+    const capacity = this.materialCapacity;
+    for (const [mat, amount] of Object.entries(monumentProd)) {
       const current = this.materials.get(mat) || 0;
-      const capacity = this.materialCapacity;
-      this.materials.set(mat, Math.min(current + produced, capacity));
-    });
+      this.materials.set(mat, Math.min(current + amount, capacity));
+    }
 
     // Defensive gold cap after monument production loop
-    // Guard against undefined gold (old documents created before this field existed)
     this.gold = Math.min(this.gold ?? 0, this.goldCapacity);
   }
 
   // 2. Tavern Production - consumes fruit + water -> rations + drinking_water
   const tavernLevel = this.buildings?.tavern?.level || 0;
   if (tavernLevel > 0) {
-    const fruitConsumed = Math.min(this.materials.get('fruit') || 0, 5 * tavernLevel);
-    const waterConsumed = Math.min(this.materials.get('water') || 0, 5 * tavernLevel);
+    const tavernProd = getTavernProduction(
+      tavernLevel,
+      this.materials.get("fruit") || 0,
+      this.materials.get("water") || 0
+    );
 
-    if (fruitConsumed >= 5 * tavernLevel && waterConsumed >= 5 * tavernLevel) {
-      this.materials.set('fruit', (this.materials.get('fruit') || 0) - fruitConsumed);
-      this.materials.set('water', (this.materials.get('water') || 0) - waterConsumed);
-
-      const rationsProduced = 3 * tavernLevel;
-      const waterProduced = 3 * tavernLevel;
-      this.materials.set('rations', (this.materials.get('rations') || 0) + rationsProduced);
-      this.materials.set('drinking_water', (this.materials.get('drinking_water') || 0) + waterProduced);
+    if (tavernProd) {
+      this.materials.set("fruit", (this.materials.get("fruit") || 0) - tavernProd.consumed.fruit);
+      this.materials.set("water", (this.materials.get("water") || 0) - tavernProd.consumed.water);
+      this.materials.set("rations", (this.materials.get("rations") || 0) + tavernProd.produced.rations);
+      this.materials.set(
+        "drinking_water",
+        (this.materials.get("drinking_water") || 0) + tavernProd.produced.drinking_water
+      );
     }
   }
 
   // 3. Potion Shop Production - consumes herbs -> potions
   const potionShopLevel = this.buildings?.potionShop?.level || 0;
   if (potionShopLevel > 0) {
-    const herbsConsumed = Math.min(this.materials.get('herbs') || 0, 3 * potionShopLevel);
+    const potionProd = getPotionShopProduction(potionShopLevel, this.materials.get("herbs") || 0);
 
-    if (herbsConsumed >= 3 * potionShopLevel) {
-      this.materials.set('herbs', (this.materials.get('herbs') || 0) - herbsConsumed);
-      const potionsProduced = 2 * potionShopLevel;
-      this.materials.set('potions', (this.materials.get('potions') || 0) + potionsProduced);
+    if (potionProd) {
+      this.materials.set("herbs", (this.materials.get("herbs") || 0) - potionProd.consumed.herbs);
+      this.materials.set("potions", (this.materials.get("potions") || 0) + potionProd.produced.potions);
     }
   }
 

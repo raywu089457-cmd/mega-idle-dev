@@ -3,14 +3,13 @@ const mongoose = require("mongoose");
 const User = require("../models/User");
 const { HeroManagementService } = require("../lib/game/services/HeroManagementService");
 const { WanderingHeroAI } = require("../lib/game/services/WanderingHeroAI");
-const { dispatch: DISPATCH_COOLDOWN } = require("../lib/game/_CONSTS/cooldowns");
+const { dispatch: DISPATCH_COOLDOWN, hunter: HUNT_COOLDOWN_MS } = require("../lib/game/_CONSTS/cooldowns");
 const { updateTaskProgress } = require("../lib/game/guild/guild-tasks");
 
 const MONGODB_URI = process.env.MONGODB_URI;
 const WANDERING_SPAWN_CHANCE = 0.3;
 
 // Hunter system constants
-const HUNT_COOLDOWN_SECONDS = 60;
 const RATIONS_PER_10_HUNTERS = 1;
 const HUNT_GOLD_BASE = 5;
 const HUNT_XP_BASE = 10;
@@ -171,7 +170,7 @@ async function processHunts(user) {
   const now = Date.now();
   if (lastHunt) {
     const elapsed = now - new Date(lastHunt).getTime();
-    const cooldownMs = HUNT_COOLDOWN_SECONDS * 1000;
+    const cooldownMs = HUNT_COOLDOWN_MS;
     if (elapsed < cooldownMs) {
       return; // Hunters still on cooldown
     }
