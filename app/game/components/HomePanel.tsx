@@ -13,8 +13,9 @@ const MAT_ICONS: Record<string, string> = {
 };
 
 export default function HomePanel({ data }: Props) {
-  const exploring = data.heroes.roster.filter((h) => h.isExploring);
-  const idle = data.heroes.roster.filter((h) => !h.isExploring);
+  const territoryHeroes = data.heroes.roster.filter((h) => h.type === "territory");
+  const exploring = territoryHeroes.filter((h) => h.isExploring);
+  const idle = territoryHeroes.filter((h) => !h.isExploring);
   const productionRates = data.productionRates || {};
 
   return (
