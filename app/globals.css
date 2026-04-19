@@ -617,6 +617,11 @@ html, body {
   .hero-name { font-size: 1rem; margin-right: 0.3rem; }
   .rarity-badge { font-size: 0.7rem; padding: 0.15rem 0.4rem; margin-left: 0.2rem; }
 
+  /* Hero card - ensure XP bar shows on mobile */
+  .hero-card { overflow: visible; }
+  .mini-xp-row { margin-top: 0.5rem; }
+  .mini-xp-label { min-width: 28px; font-size: 11px; }
+
   /* Buttons - larger touch targets */
   .btn-primary, .btn-secondary, .btn-danger {
     padding: 0.65rem 1.25rem; font-size: 0.9rem;
