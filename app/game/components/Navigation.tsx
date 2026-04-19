@@ -43,7 +43,9 @@ export default function Navigation({ active, onChange }: Props) {
               className={`header-nav-btn ${active === tab.id ? "active" : ""}`}
               onClick={() => onChange(tab.id)}
             >
-              <span className="nav-icon">{tab.icon}</span>
+              <span className="nav-icon-wrap">
+                <span className="nav-icon">{tab.icon}</span>
+              </span>
               <span className="nav-label">{tab.label}</span>
             </button>
           ))}

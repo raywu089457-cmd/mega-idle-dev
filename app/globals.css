@@ -76,15 +76,21 @@ html, body {
 .game-header {
   display: flex;
   align-items: center;
-  padding: 0.75rem 1.5rem;
+  padding: 12px 24px;
   background: var(--surface); border-bottom: 1px solid var(--border);
   position: sticky; top: 0; z-index: 10;
   gap: 0.5rem;
+  justify-content: space-between;
 }
-.game-header h1 { font-size: 1.25rem; flex-shrink: 0; }
+.game-header h1 {
+  font-size: 20px; flex-shrink: 0;
+  font-family: 'Microsoft JhengHei UI', 'Noto Sans TC', system-ui, sans-serif;
+  font-weight: 700;
+  color: var(--text);
+}
 .header-info {
   display: flex;
-  gap: 0.5rem;
+  gap: 8px;
   align-items: center;
   font-size: 0.85rem;
   flex: 1;
@@ -92,14 +98,17 @@ html, body {
   justify-content: center;
 }
 .header-nav-btn {
-  display: flex; align-items: center; gap: 0.3rem;
-  padding: 0.4rem 0.75rem; border: none; background: transparent;
+  display: flex; align-items: center; gap: 4.8px;
+  padding: 6.4px 12px; border: none; background: transparent;
   color: var(--text2); border-radius: 6px; cursor: pointer;
-  font-size: 0.8rem; transition: all 0.15s;
+  font-size: 12.8px; font-family: 'Noto Sans TC', system-ui, sans-serif;
+  transition: all 0.15s;
 }
 .header-nav-btn:hover { background: var(--surface2); color: var(--text); }
 .header-nav-btn.active { background: var(--accent); color: white; }
-.header-nav-btn .nav-icon { font-size: 0.9rem; }
+.header-nav-btn .nav-icon { font-size: 14.4px; }
+.header-nav-btn .nav-label { font-size: 12.8px; margin-top: 2px; }
+.header-nav-btn .nav-icon-wrap { display: flex; flex-direction: column; align-items: center; padding: 2.4px 0 0.8px; }
 .gold { color: var(--gold); font-weight: 600; }
 .stones { color: #a78bfa; font-weight: 600; }
 .username { color: var(--text2); }
@@ -294,7 +303,12 @@ html, body {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem;
 }
-.panel h2 { font-size: 0.85rem; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 1rem; }
+.panel h2 {
+  font-size: 13.6px; color: var(--text2);
+  text-transform: uppercase; letter-spacing: 0.816px;
+  font-family: 'Microsoft JhengHei UI', system-ui, sans-serif;
+  font-weight: 700; margin-bottom: 1rem;
+}
 .panel-header { margin-bottom: 1rem; text-align: center; }
 .panel-header h2 { margin-bottom: 0.75rem; text-align: center; }
 .panel-footer { margin-top: 1rem; display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
@@ -438,15 +452,15 @@ html, body {
   padding: 0.6rem; background: var(--surface2); border-radius: 8px;
 }
 .bld-name { font-size: 0.7rem; color: var(--text2); }
-.bld-lv { font-size: 1rem; font-weight: 700; color: var(--hp); margin-top: 0.2rem; }
+.bld-lv { font-size: 16px; font-weight: 700; color: var(--hp); font-family: 'Microsoft JhengHei UI', system-ui, sans-serif; }
 .buildings-list { display: flex; flex-direction: column; gap: 0.5rem; }
 .bld-row {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 0.5rem 0.75rem; background: var(--surface2); border-radius: 8px;
+  padding: 8px 12px; background: #1A1A25; border-radius: 8px;
 }
 .bld-info { display: flex; flex-direction: column; }
-.bld-info .bld-name { font-size: 0.85rem; color: var(--text); font-weight: 600; }
-.bld-info .bld-desc { font-size: 0.7rem; color: var(--text3); margin-top: 0.1rem; }
+.bld-info .bld-name { font-size: 13.6px; color: var(--text); font-weight: 700; font-family: 'Microsoft JhengHei UI', system-ui, sans-serif; }
+.bld-info .bld-desc { font-size: 11.2px; color: var(--text3); margin-top: 1.6px; font-family: 'Microsoft JhengHei UI', system-ui, sans-serif; }
 .bld-right { display: flex; align-items: center; gap: 0.5rem; }
 
 /* Resources */
