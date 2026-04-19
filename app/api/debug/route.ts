@@ -4,6 +4,7 @@ import { connectDB } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
 import { UserRepository } from "@/lib/repositories/UserRepository";
 import { HeroManagementService } from "@/lib/game/services/HeroManagementService";
+import type { Hero } from "@/lib/types";
 
 async function getUser() {
   const session = await getServerSession(authOptions);
@@ -147,17 +148,17 @@ export async function POST(request: Request) {
       }
       case "expelAllTerritory": {
         const heroes = user.heroes?.roster || [];
-        const territoryHeroes = heroes.filter((h) => h.type === "territory");
+        const territoryHeroes = (heroes as Hero[]).filter((h) => h.type === "territory");
         const removedIds = territoryHeroes.map((h) => h.id);
-        user.heroes.roster = heroes.filter((h) => h.type !== "territory");
+        user.heroes.roster = (heroes as Hero[]).filter((h) => h.type !== "territory");
         result = { expelled: territoryHeroes.length, ids: removedIds };
         break;
       }
       case "expelAllWandering": {
         const heroes = user.heroes?.roster || [];
-        const wanderingHeroes = heroes.filter((h) => h.type === "wandering");
+        const wanderingHeroes = (heroes as Hero[]).filter((h) => h.type === "wandering");
         const removedIds = wanderingHeroes.map((h) => h.id);
-        user.heroes.roster = heroes.filter((h) => h.type !== "wandering");
+        user.heroes.roster = (heroes as Hero[]).filter((h) => h.type !== "wandering");
         result = { expelled: wanderingHeroes.length, ids: removedIds };
         break;
       }
