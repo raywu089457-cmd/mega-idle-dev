@@ -22,6 +22,9 @@ export default function BuildingsPanel({ data, api }: Props) {
   const [msg, setMsg] = useState<string | null>(null);
   const [showBuildNew, setShowBuildNew] = useState(false);
 
+  // Filter to only valid buildings defined in BUILDING_NAMES
+  const validBuildingEntries = Object.entries(data.buildings).filter(([k]) => k in BUILDING_NAMES);
+
   function getCost(bld: string, level: number) {
     // Use centralized formula - target level is level + 1
     return getBuildingCost(bld, level + 1);
@@ -106,7 +109,7 @@ export default function BuildingsPanel({ data, api }: Props) {
       <h2>🏗️ 建築</h2>
 
       <div className="buildings-list">
-        {Object.entries(data.buildings).map(([k, b]) => {
+        {validBuildingEntries.map(([k, b]) => {
           const cost = getCost(k, b.level);
           const hasGold = data.gold >= cost.gold;
           const hasWood = !cost.wood || data.materials.wood >= cost.wood;
