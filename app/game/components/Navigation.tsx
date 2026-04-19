@@ -26,9 +26,12 @@ const PRIMARY_TABS: Tab[] = ["home", "heroes", "dispatch", "team", "build"];
 interface Props {
   active: Tab;
   onChange: (tab: Tab) => void;
+  gold?: number;
+  goldCapacity?: number;
+  username?: string;
 }
 
-export default function Navigation({ active, onChange }: Props) {
+export default function Navigation({ active, onChange, gold, goldCapacity, username }: Props) {
   const [showMore, setShowMore] = useState(false);
 
   return (
@@ -49,6 +52,10 @@ export default function Navigation({ active, onChange }: Props) {
               <span className="nav-label">{tab.label}</span>
             </button>
           ))}
+        </div>
+        <div className="header-user-info">
+          <span className="gold">💰 {gold?.toLocaleString() || 0} / {goldCapacity?.toLocaleString() || 0}</span>
+          <span className="username">{username}</span>
         </div>
       </header>
 

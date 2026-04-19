@@ -21,6 +21,15 @@ import NotificationBell from "./components/NotificationBell";
 import DebugPanel from "./components/DebugPanel";
 import { useGameData } from "./hooks/useGameData";
 
+const MAT_ICONS: Record<string, string> = {
+  fruit: "🍎", water: "💧", wood: "🪵", iron: "⛓️",
+  herbs: "🌿", magicStones: "💎", magic_stone: "💎", rations: "🍖", drinking_water: "🥤", potions: "🧪",
+};
+
+function getMaterialIcon(k: string): string {
+  return MAT_ICONS[k] || "📦";
+}
+
 type Tab = "home" | "heroes" | "dispatch" | "team" | "build" | "worldboss" | "guild" | "rewards" | "logs" | "army" | "crafting" | "inventory" | "stats" | "debug";
 
 export default function GamePage() {
@@ -51,11 +60,24 @@ export default function GamePage() {
 
   return (
     <div className="game-shell">
-      <Navigation active={tab} onChange={setTab} />
+      <Navigation
+        active={tab}
+        onChange={setTab}
+        gold={data.gold}
+        goldCapacity={data.goldCapacity}
+        username={data.username}
+      />
       <div className="header-resources mobile-only">
         <span className="gold">💰 {data.gold.toLocaleString()}</span>
         <span className="stones">💎 {data.magicStones}</span>
         <span className="username">{data.username}</span>
+        <div className="mobile-resources">
+          {Object.entries(data.materials).map(([k, v]) => (
+            <span key={k} className="mobile-res-item">
+              {getMaterialIcon(k)} {Number(v).toLocaleString()}
+            </span>
+          ))}
+        </div>
       </div>
 
       <main className="game-content">
