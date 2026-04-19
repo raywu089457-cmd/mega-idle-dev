@@ -43,8 +43,11 @@ const heroSchema = new mongoose.Schema({
   // Wandering Hero AI State
   personalGold: { type: Number, default: 0 },      // Gold earned by wandering heroes for shopping
   personalStones: { type: Number, default: 0 },    // Magic stones kept by wandering heroes (80% of drops)
-  state: { type: String, enum: ['idle', 'exploring', 'fighting', 'resting', 'shopping', 'dead'], default: 'idle' },
+  state: { type: String, enum: ['idle', 'exploring', 'fighting', 'resting', 'shopping', 'dead', 'weak'], default: 'idle' },
   restTicks: { type: Number, default: 0 },         // Ticks spent resting (for recovery)
+  // Territory hero weak state
+  isWeak: { type: Boolean, default: false },         // True = recovering from death
+  weakTicks: { type: Number, default: 0 },         // Ticks spent in weak state
 }, { _id: false });
 
 // =============================================================================
@@ -544,6 +547,9 @@ userSchema.methods.addHero = function(heroData) {
     personalStones: 0,
     state: 'idle',
     restTicks: 0,
+    // Territory hero weak state
+    isWeak: false,
+    weakTicks: 0,
   };
 
   // Apply starting equipment based on profession

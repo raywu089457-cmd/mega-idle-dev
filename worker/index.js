@@ -115,6 +115,47 @@ async function processHungerThirst(user, tickCount) {
 }
 
 /**
+ * Process territory hero recovery from defeat (weak state)
+ * Territory heroes enter weak state after combat defeat (HP <= 0)
+ * They recover HP each tick until 80% HP, then become idle
+ * HP regen: 25% per tick (same as wandering hero resting)
+ */
+async function processTerritoryHeroRecovery(user) {
+  // Find all territory heroes in weak state
+  const weakHeroes = user.heroes?.roster?.filter(h =>
+    h.type === "territory" && h.isWeak === true
+  ) || [];
+
+  if (weakHeroes.length === 0) {
+    return;
+  }
+
+  for (const hero of weakHeroes) {
+    // Initialize weakTicks if not set
+    if (hero.weakTicks === undefined) {
+      hero.weakTicks = 0;
+    }
+
+    // Regenerate 25% HP per tick
+    const hpRegen = Math.floor(hero.maxHp * 0.25);
+    hero.currentHp = Math.min(hero.maxHp, hero.currentHp + hpRegen);
+    hero.weakTicks++;
+
+    // Check if recovered to 80% HP threshold
+    const hpThreshold = Math.floor(hero.maxHp * 0.8);
+    if (hero.currentHp >= hpThreshold) {
+      hero.isWeak = false;
+      hero.weakTicks = 0;
+      hero.state = 'idle';
+      // Ensure HP doesn't go below 80% when becoming idle
+      hero.currentHp = Math.max(hero.currentHp, hpThreshold);
+    }
+  }
+
+  user.markModified("heroes.roster");
+}
+
+/**
  * Process army hunts for a user
  * Hunters consume rations and provide gold/XP rewards
  */
@@ -328,9 +369,17 @@ async function processExploration(user) {
 
         // Process level up
         HeroManagementService.addXp(user, hero.id, 0);
+
+        // Territory hero enters weak state if defeated (HP <= 0)
+        // Wandering heroes handle their own state via WanderingHeroAI
+        if (hero.type === 'territory' && heroState.currentHp <= 0) {
+          hero.isWeak = true;
+          hero.weakTicks = 0;
+          hero.state = 'weak';
+        }
       }
 
-      // Clear exploring state so hero can be dispatched again
+      // Clear exploring state so hero can be dispatched again (if not weak)
       hero.isExploring = false;
       hero.currentZone = null;
       hero.currentSubZone = null;
@@ -421,7 +470,10 @@ async function processAllUsers(tickCount) {
       // 4. Process exploration battles
       await processExploration(user);
 
-      // 4.5. Process wandering hero AI (autonomous exploration, combat, shopping)
+      // 4.5. Process territory hero recovery from defeat (weak state)
+      await processTerritoryHeroRecovery(user);
+
+      // 4.6. Process wandering hero AI (autonomous exploration, combat, shopping)
       const wanderingAI = new WanderingHeroAI();
       const wanderingResult = await wanderingAI.processTick(user);
       if (wanderingResult.wanderingHeroGold > 0 || wanderingResult.wanderingHeroStones > 0) {

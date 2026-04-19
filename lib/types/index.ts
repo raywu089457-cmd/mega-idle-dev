@@ -13,7 +13,7 @@ export interface HeroEquipment {
   accessory: string | null;
 }
 
-export type HeroState = 'idle' | 'exploring' | 'fighting' | 'resting' | 'shopping' | 'dead';
+export type HeroState = 'idle' | 'exploring' | 'fighting' | 'resting' | 'shopping' | 'dead' | 'weak';
 
 export interface Hero {
   id: string;
@@ -44,6 +44,9 @@ export interface Hero {
   personalStones: number;
   state: HeroState;
   restTicks: number;
+  // Territory Hero weak state (true = recovering from death)
+  isWeak: boolean;
+  weakTicks: number;
 }
 
 export interface HeroRoster {
