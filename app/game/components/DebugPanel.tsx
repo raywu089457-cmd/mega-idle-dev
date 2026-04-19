@@ -70,6 +70,16 @@ export default function DebugPanel() {
     await callDebug("resetHeroHunger");
   }
 
+  async function expelAllTerritory() {
+    if (!window.confirm("⚠️ 確定要驅逐所有領地英雄嗎？")) return;
+    await callDebug("expelAllTerritory");
+  }
+
+  async function expelAllWandering() {
+    if (!window.confirm("⚠️ 確定要驅逐所有流浪英雄嗎？")) return;
+    await callDebug("expelAllWandering");
+  }
+
   async function addExp() {
     const amt = parseInt(debugExp);
     if (isNaN(amt) || amt <= 0) { setMsg("請輸入有效經驗值"); return; }
@@ -193,6 +203,10 @@ export default function DebugPanel() {
           <button onClick={spawnHero} disabled={loading}>生成流浪英雄</button>
           <button onClick={fullHeal} disabled={loading}>全英雄滿血</button>
           <button onClick={resetHeroHunger} disabled={loading}>重置飢餓/口渴</button>
+        </div>
+        <div className="debug-row">
+          <button onClick={expelAllTerritory} disabled={loading} className="btn-danger">驅逐所有領地英雄</button>
+          <button onClick={expelAllWandering} disabled={loading} className="btn-danger">驅逐所有流浪英雄</button>
         </div>
       </section>
 

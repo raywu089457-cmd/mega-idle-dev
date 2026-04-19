@@ -24,6 +24,8 @@ const VALID_ACTIONS = [
   "addExp",
   "unlockZone",
   "deleteAccount",
+  "expelAllTerritory",
+  "expelAllWandering",
 ];
 
 export async function POST(request: Request) {
@@ -141,6 +143,22 @@ export async function POST(request: Request) {
         // Use soft delete via UserRepository
         await UserRepository.softDelete(user.userId);
         result = { deleted: true, userId: user.userId, needsReLogin: true };
+        break;
+      }
+      case "expelAllTerritory": {
+        const heroes = user.heroes?.roster || [];
+        const territoryHeroes = heroes.filter((h) => h.type === "territory");
+        const removedIds = territoryHeroes.map((h) => h.id);
+        user.heroes.roster = heroes.filter((h) => h.type !== "territory");
+        result = { expelled: territoryHeroes.length, ids: removedIds };
+        break;
+      }
+      case "expelAllWandering": {
+        const heroes = user.heroes?.roster || [];
+        const wanderingHeroes = heroes.filter((h) => h.type === "wandering");
+        const removedIds = wanderingHeroes.map((h) => h.id);
+        user.heroes.roster = heroes.filter((h) => h.type !== "wandering");
+        result = { expelled: wanderingHeroes.length, ids: removedIds };
         break;
       }
       default:
