@@ -40,6 +40,11 @@ const heroSchema = new mongoose.Schema({
     helmet: String,
     accessory: String,
   },
+  // Wandering Hero AI State
+  personalGold: { type: Number, default: 0 },      // Gold earned by wandering heroes for shopping
+  personalStones: { type: Number, default: 0 },    // Magic stones kept by wandering heroes (80% of drops)
+  state: { type: String, enum: ['idle', 'exploring', 'fighting', 'resting', 'shopping', 'dead'], default: 'idle' },
+  restTicks: { type: Number, default: 0 },         // Ticks spent resting (for recovery)
 }, { _id: false });
 
 // =============================================================================
@@ -287,6 +292,8 @@ const userSchema = new mongoose.Schema({
     goldEarned: { type: Number, default: 0 },
     goldSpent: { type: Number, default: 0 },
     goldFromWandering: { type: Number, default: 0 },
+    goldFromShopping: { type: Number, default: 0 },
+    stonesFromWandering: { type: Number, default: 0 },
     goldFromExploration: { type: Number, default: 0 },
     heroesRecruited: { type: Number, default: 0 },
     heroesTrained: { type: Number, default: 0 },
@@ -532,6 +539,11 @@ userSchema.methods.addHero = function(heroData) {
     thirst: 100,
     attackRange: heroData.attackRange || 'melee',
     equipment: { weapon: null, armor: null, helmet: null, accessory: null },
+    // Wandering Hero AI fields
+    personalGold: 0,
+    personalStones: 0,
+    state: 'idle',
+    restTicks: 0,
   };
 
   // Apply starting equipment based on profession

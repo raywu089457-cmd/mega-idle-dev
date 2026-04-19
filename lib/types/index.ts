@@ -13,6 +13,8 @@ export interface HeroEquipment {
   accessory: string | null;
 }
 
+export type HeroState = 'idle' | 'exploring' | 'fighting' | 'resting' | 'shopping' | 'dead';
+
 export interface Hero {
   id: string;
   name: string;
@@ -37,6 +39,11 @@ export interface Hero {
   thirst: number;
   attackRange: AttackRange;
   equipment: HeroEquipment;
+  // Wandering Hero AI State
+  personalGold: number;
+  personalStones: number;
+  state: HeroState;
+  restTicks: number;
 }
 
 export interface HeroRoster {
@@ -308,6 +315,8 @@ export interface Statistics {
   goldEarned: number;
   goldSpent: number;
   goldFromWandering: number;
+  goldFromShopping: number;
+  stonesFromWandering: number;
   goldFromExploration: number;
   heroesRecruited: number;
   heroesTrained: number;

@@ -2,6 +2,7 @@ const axios = require("axios");
 const mongoose = require("mongoose");
 const User = require("../models/User");
 const { HeroManagementService } = require("../lib/game/services/HeroManagementService");
+const { WanderingHeroAI } = require("../lib/game/services/WanderingHeroAI");
 const { dispatch: DISPATCH_COOLDOWN } = require("../lib/game/_CONSTS/cooldowns");
 const { updateTaskProgress } = require("../lib/game/guild/guild-tasks");
 
@@ -419,6 +420,13 @@ async function processAllUsers(tickCount) {
 
       // 4. Process exploration battles
       await processExploration(user);
+
+      // 4.5. Process wandering hero AI (autonomous exploration, combat, shopping)
+      const wanderingAI = new WanderingHeroAI();
+      const wanderingResult = await wanderingAI.processTick(user);
+      if (wanderingResult.wanderingHeroGold > 0 || wanderingResult.wanderingHeroStones > 0) {
+        console.log(`[tick] Wandering heroes contributed ${wanderingResult.wanderingHeroGold} gold, ${wanderingResult.wanderingHeroStones} stones`);
+      }
 
       // 5. Wandering hero spawning (30% chance per user per tick if under cap)
       const canSpawnWandering =
