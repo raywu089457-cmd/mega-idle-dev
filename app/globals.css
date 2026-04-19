@@ -404,6 +404,7 @@ html, body {
   padding: 0.75rem; background: var(--surface2);
   border-radius: 10px; border: 2px solid var(--border);
   text-align: center; cursor: pointer; transition: all 0.15s;
+  overflow: visible;
 }
 .hero-card:hover { border-color: var(--accent); transform: translateY(-2px); }
 .hero-card.exploring { border-color: var(--accent); }
@@ -618,9 +619,10 @@ html, body {
   .rarity-badge { font-size: 0.7rem; padding: 0.15rem 0.4rem; margin-left: 0.2rem; }
 
   /* Hero card - ensure XP bar shows on mobile */
-  .hero-card { overflow: visible; }
-  .mini-xp-row { margin-top: 0.5rem; }
+  .hero-card { overflow: visible; min-height: 140px; }
+  .mini-xp-row { margin-top: 0.5rem; display: flex !important; }
   .mini-xp-label { min-width: 28px; font-size: 11px; }
+  .mini-xp-bar { height: 4px; display: block; }
 
   /* Buttons - larger touch targets */
   .btn-primary, .btn-secondary, .btn-danger {
