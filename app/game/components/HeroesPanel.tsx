@@ -421,8 +421,11 @@ export default function HeroesPanel({ data, api }: Props) {
               </div>
               {h.isExploring && <span className="badge exploring-badge">⚔️ 探索中</span>}
               {needsAttention && <span className="badge warning-badge">⚠️ 需要注意</span>}
-              <div className="mini-xp-bar">
-                <div className="mini-xp-fill" style={{ width: `${Math.min(100, ((h.experience || 0) / getXpForLevel(h.level)) * 100)}%` }} />
+              <div className="mini-xp-row">
+                <span className="mini-xp-label">EXP</span>
+                <div className="mini-xp-bar">
+                  <div className="mini-xp-fill" style={{ width: `${Math.min(100, ((h.experience || 0) / getXpForLevel(h.level)) * 100)}%` }} />
+                </div>
               </div>
             </div>
           );
