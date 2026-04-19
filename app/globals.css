@@ -452,15 +452,15 @@ html, body {
   padding: 0.6rem; background: var(--surface2); border-radius: 8px;
 }
 .bld-name { font-size: 0.7rem; color: var(--text2); }
-.bld-lv { font-size: 16px; font-weight: 700; color: var(--hp); font-family: 'Microsoft JhengHei UI', system-ui, sans-serif; }
+.bld-lv { font-size: 16px; font-weight: 700; color: var(--hp); font-family: 'Microsoft JhengHei UI', system-ui, sans-serif; line-height: 20px; display: flex; align-items: center; }
 .buildings-list { display: flex; flex-direction: column; gap: 0.5rem; }
 .bld-row {
   display: flex; justify-content: space-between; align-items: center;
   padding: 8px 12px; background: #1A1A25; border-radius: 8px;
 }
-.bld-info { display: flex; flex-direction: column; }
-.bld-info .bld-name { font-size: 13.6px; color: var(--text); font-weight: 700; font-family: 'Microsoft JhengHei UI', system-ui, sans-serif; }
-.bld-info .bld-desc { font-size: 11.2px; color: var(--text3); margin-top: 1.6px; font-family: 'Microsoft JhengHei UI', system-ui, sans-serif; }
+.bld-info { display: flex; flex-direction: column; align-items: center; }
+.bld-info .bld-name { font-size: 13.6px; color: var(--text); font-weight: 700; font-family: 'Microsoft JhengHei UI', system-ui, sans-serif; text-align: center; }
+.bld-info .bld-desc { font-size: 11.2px; color: var(--text3); margin-top: 1.6px; font-family: 'Microsoft JhengHei UI', system-ui, sans-serif; text-align: center; }
 .bld-right { display: flex; align-items: center; gap: 0.5rem; }
 
 /* Resources */
