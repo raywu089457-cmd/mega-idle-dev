@@ -458,9 +458,9 @@ html, body {
   display: flex; justify-content: space-between; align-items: center;
   padding: 8px 12px; background: #1A1A25; border-radius: 8px;
 }
-.bld-info { display: flex; flex-direction: column; align-items: center; }
-.bld-info .bld-name { font-size: 13.6px; color: var(--text); font-weight: 700; font-family: 'Microsoft JhengHei UI', system-ui, sans-serif; text-align: center; }
-.bld-info .bld-desc { font-size: 11.2px; color: var(--text3); margin-top: 1.6px; font-family: 'Microsoft JhengHei UI', system-ui, sans-serif; text-align: center; }
+.bld-info { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 78px; }
+.bld-info .bld-name { font-size: 13.6px; color: var(--text); font-weight: 700; font-family: 'Microsoft JhengHei UI', system-ui, sans-serif; text-align: center; line-height: 17px; }
+.bld-info .bld-desc { font-size: 11.2px; color: var(--text3); margin-top: 1.6px; font-family: 'Microsoft JhengHei UI', system-ui, sans-serif; text-align: center; line-height: 14px; }
 .bld-right { display: flex; align-items: center; gap: 0.5rem; }
 
 /* Resources */
