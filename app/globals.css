@@ -323,6 +323,7 @@ html, body {
 .mini-xp-fill { height: 100%; background: var(--accent); }
 .mini-xp-row { display: flex; align-items: center; gap: 6px; margin-top: 0.3rem; }
 .mini-xp-label { font-size: 10px; font-weight: 600; color: var(--text2); min-width: 24px; }
+.mini-xp-value { font-size: 10px; color: var(--text2); white-space: nowrap; }
 
 /* Content */
 .game-content { flex: 1; padding: 1rem; }
@@ -422,6 +423,7 @@ html, body {
 .hero-card-stats { display: flex; justify-content: center; gap: 0.75rem; margin-top: 0.2rem; }
 .stat-atk, .stat-def { font-size: 0.9rem; font-weight: 600; }
 .hero-card-needs { font-size: 0.7rem; color: var(--text2); margin-top: 0.2rem; }
+.hero-card-resources { font-size: 0.7rem; color: var(--text2); margin-top: 0.2rem; }
 .exploring-badge { background: var(--accent); color: white; font-size: 0.7rem; padding: 0.15rem 0.4rem; border-radius: 4px; }
 .warning-badge { background: var(--danger); color: white; font-size: 0.7rem; padding: 0.15rem 0.4rem; border-radius: 4px; }
 .hero-info { display: flex; align-items: center; gap: 0.5rem; justify-content: center; flex-wrap: wrap; }
@@ -623,9 +625,11 @@ html, body {
   /* Hero card - ensure XP bar shows on mobile */
   .hero-card { overflow: visible; min-height: 130px; }
   .hero-card-name { flex-wrap: wrap; gap: 4px; }
+  .hero-card-resources { font-size: 0.75rem; }
   .mini-xp-row { margin-top: 0.5rem; display: flex !important; width: 100%; }
   .mini-xp-label { min-width: 28px; font-size: 11px; }
   .mini-xp-bar { height: 4px; display: block; flex: 1; max-width: 100px; }
+  .mini-xp-value { font-size: 10px; }
 
   /* Buttons - larger touch targets */
   .btn-primary, .btn-secondary, .btn-danger {

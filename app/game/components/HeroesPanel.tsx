@@ -103,7 +103,7 @@ function HeroDetail({ hero, data, api, onClose }: HeroDetailProps) {
             {hero.name}
           </span>
           <span className="hero-lv">Lv.{hero.level}</span>
-          {hero.profession && <span className="hero-profession">{hero.profession}</span>}
+          {hero.profession && <span className="hero-profession">{PROFESSION_MAP[hero.profession] || hero.profession}</span>}
         </div>
 
         {/* XP Progress Bar */}
@@ -126,6 +126,12 @@ function HeroDetail({ hero, data, api, onClose }: HeroDetailProps) {
         <div className="needs-row">
           <div>🍖 飢餓: {Math.round(hero.hunger)}/100</div>
           <div>💧 口渴: {Math.round(hero.thirst)}/100</div>
+        </div>
+
+        {/* Gold/MagicStones */}
+        <div className="needs-row">
+          <div>💰 金幣: {hero.gold?.toLocaleString() || 0}</div>
+          <div>💎 寶石: {hero.magicStones?.toLocaleString() || 0}</div>
         </div>
 
         {/* Equipment Slots */}
@@ -420,6 +426,9 @@ export default function HeroesPanel({ data, api }: Props) {
               <div className="hero-card-needs">
                 🍖 {Math.round(h.hunger)}/100 &nbsp; 💧 {Math.round(h.thirst)}/100
               </div>
+              <div className="hero-card-resources">
+                💰 {h.gold?.toLocaleString() || 0} &nbsp; 💎 {h.magicStones?.toLocaleString() || 0}
+              </div>
               {h.isExploring && <span className="badge exploring-badge">⚔️ 探索中</span>}
               {needsAttention && <span className="badge warning-badge">⚠️ 需要注意</span>}
               <div className="mini-xp-row">
@@ -427,6 +436,7 @@ export default function HeroesPanel({ data, api }: Props) {
                 <div className="mini-xp-bar">
                   <div className="mini-xp-fill" style={{ width: `${Math.min(100, ((h.experience || 0) / getXpForLevel(h.level)) * 100)}%` }} />
                 </div>
+                <span className="mini-xp-value">{h.experience || 0}/{getXpForLevel(h.level)}</span>
               </div>
             </div>
           );

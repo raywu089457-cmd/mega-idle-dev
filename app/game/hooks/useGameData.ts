@@ -54,6 +54,8 @@ export interface Hero {
   lastSubZone?: number;
   explorationTicks?: number;
   equipment?: Record<string, string | null>;
+  gold?: number;
+  magicStones?: number;
 }
 
 export interface ArmyUnits {
